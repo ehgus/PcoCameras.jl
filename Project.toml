@@ -1,0 +1,11 @@
+name = "PcoCameras"
+uuid = "cecd365b-c245-4458-9b9e-f698bdbf71a7"
+authors = ["Dohyeon Lee <dleh428@kaist.ac.kr>"]
+version = "0.1.0"
+
+[deps]
+Cameras = "6410b9bd-72f2-532f-9386-433801972073"
+Ionimaging = "26034d70-18a2-11e9-3cec-95caba4833f9"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+Preferences = "21216c6a-2e73-6563-6e65-726566657250"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
