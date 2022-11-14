@@ -9,6 +9,9 @@ dir_path = "C:/Program Files/PCO Digital Camera Toolbox/pco.recorder/bin64"
 const Recorder_DLL = Ref{Ptr{Cvoid}}(0)
 function __init__()
     Recorder_DLL[] = dlopen(joinpath(dir_path,"PCO_Recorder.dll"))
+    if ResetLib(false) != 0
+        error("Recorder initializaiton is failed")
+    end
 end
 
 # ----------------------------------------------------------------------
@@ -17,21 +20,21 @@ end
 
 function GetVersion(Major, Minor, Patch, Build)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetVersion)
-    ccall(F, Cvoid, (Ref{Cint}, Ref{Cint}, Ref{Cint}, Ref{Cint}),
+    ccall(F, Cvoid, (Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
      Major, Minor, Patch, Build)
 end
 
 
 function SaveImage(pImgBuf, Width, Height, FileType, IsBitmap, FilePth, Overwrite, metadata)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSaveImage)
-    ccall(F, Cuint, (Ref{Cvoid}, WORD, WORD, Ref{Cchar}, bool, Ref{Cchar}, bool,  Ref{Metadata}),
+    ccall(F, Cuint, (Ptr{Cvoid}, WORD, WORD, Ptr{Cchar}, bool, Ptr{Cchar}, bool,  Ptr{Metadata}),
      pImgBuf, Width, Height, FileType, IsBitmap, FilePth, Overwrite, metadata)
 end
 
 
 function SaveOverlay(pImgBufR, pImgBufG, pImgBufB, Width, Height, FileType, FilePth, Overwrite, metadata)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSaveOverlay)
-    ccall(F, Cuint, (Ref{Cvoid}, Ref{Cvoid}, Ref{Cvoid}, WORD, WORD, Ref{Cchar}, Ref{Cchar}, bool, Ref{Metadata}),
+    ccall(F, Cuint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, WORD, WORD, Ptr{Cchar}, Ptr{Cchar}, bool, Ptr{Metadata}),
      pImgBufR, pImgBufG, pImgBufB, Width, Height, FileType, FilePth, Overwrite, metadata)
 end
 
@@ -44,7 +47,7 @@ end
 
 function Create(phRec, phCamArr, ImgDistributionArr, ArrLength, RecMode, DriveLetter, MaxImgCountArr)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCreate)
-    ccall(F, Cuint, (Ref{HANDLE}, Ref{HANDLE}, Ref{DWORD}, WORD, WORD, Cchar, Ref{DWORD}),
+    ccall(F, Cuint, (Ptr{HANDLE}, Ptr{HANDLE}, Ptr{DWORD}, WORD, WORD, Cchar, Ptr{DWORD}),
      phRec, phCamArr, ImgDistributionArr, ArrLength, RecMode, DriveLetter, MaxImgCountArr)
 end
 
@@ -57,7 +60,7 @@ end
 
 function Init(phRec, ImgCountArr, ArrLength, Type, NoOverwrite, FilePath, RamSegmentArr)
     F = dlsym(Recorder_DLL[], :PCO_RecorderInit)
-    ccall(F, Cuint, (HANDLE, Ref{DWORD}, WORD, WORD, WORD, Ref{Cchar}, Ref{WORD}),
+    ccall(F, Cuint, (HANDLE, Ptr{DWORD}, WORD, WORD, WORD, Ptr{Cchar}, Ptr{WORD}),
      phRec, ImgCountArr, ArrLength, Type, NoOverwrite, FilePath, RamSegmentArr)
 end
 
@@ -70,7 +73,7 @@ end
 
 function GetSettings(phRec, phCam, Recmode, MaxImgCount, ReqImgCount, Width, Height, MetadataLines)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetSettings)
-    ccall(F, Cuint, (HANDLE, HANDLE, Ref{DWORD}, Ref{DWORD}, Ref{DWORD}, Ref{WORD}, Ref{WORD}, Ref{WORD}),
+    ccall(F, Cuint, (HANDLE, HANDLE, Ptr{DWORD}, Ptr{DWORD}, Ptr{DWORD}, Ptr{WORD}, Ptr{WORD}, Ptr{WORD}),
      phRec, phCam, Recmode, MaxImgCount, ReqImgCount, Width, Height, MetadataLines)
 end
 
@@ -96,49 +99,49 @@ end
 
 function SetAutoExpRegions(phRec, phCam, RegionType, RoiX0Arr, RoiY0Arr, ArrLength)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSetAutoExpRegions)
-    ccall(F, Cuint, (HANDLE, HANDLE, WORD, Ref{WORD}, Ref{WORD}, WORD),
+    ccall(F, Cuint, (HANDLE, HANDLE, WORD, Ptr{WORD}, Ptr{WORD}, WORD),
      phRec, phCam, RegionType, RoiX0Arr, RoiY0Arr, ArrLength)
 end
 
 
 function SetCompressionParams(phRec, phCam, compressionParams)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSetCompressionParams)
-    ccall(F, Cuint, (HANDLE, HANDLE, Ref{CompressionParams}),
+    ccall(F, Cuint, (HANDLE, HANDLE, Ptr{CompressionParams}),
      phRec, phCam, compressionParams)
 end
 
 
 function GetStatus(phRec, phCam, IsRunning, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetStatus)
-    ccall(F, Cuint, (HANDLE, HANDLE, Ref{bool}, Ref{bool}, Ref{DWORD}, Ref{DWORD}, Ref{DWORD}, Ref{bool}, Ref{bool}, Ref{DWORD}, Ref{DWORD}),
+    ccall(F, Cuint, (HANDLE, HANDLE, Ptr{bool}, Ptr{bool}, Ptr{DWORD}, Ptr{DWORD}, Ptr{DWORD}, Ptr{bool}, Ptr{bool}, Ptr{DWORD}, Ptr{DWORD}),
      phRec, phCam, IsRunning, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
 end
 
 
 function GetImageAddress(phRec, phCam, ImgIdx, ImgBuf, Width, Height, ImgNumber)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetImageAddress)
-    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, Ref{Ptr{WORD}}, Ref{WORD}, Ref{WORD}, Ref{DWORD}),
+    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, Ptr{Ptr{WORD}}, Ptr{WORD}, Ptr{WORD}, Ptr{DWORD}),
      phRec, phCam, ImgIdx, ImgBuf, Width, Height, ImgNumber)
 end
 
 
 function CopyImage(phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCopyImage)
-    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, WORD, WORD, WORD, WORD, Ref{WORD}, Ref{DWORD}, Ref{Metadata}, Ref{Timestamp}),
+    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, WORD, WORD, WORD, WORD, Ptr{WORD}, Ptr{DWORD}, Ptr{Metadata}, Ptr{Timestamp}),
      phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
 end
 
 
 function CopyAverageImage(phRec, phCam, StartIdx, StopIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCopyAverageImage)
-    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, DWORD, WORD, WORD, WORD, WORD, Ref{WORD}),
+    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, DWORD, WORD, WORD, WORD, WORD, Ptr{WORD}),
      phRec, phCam, StartIdx, StopIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf)
 end
 
 
 function CopyImageCompressed(phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCopyImageCompressed)
-    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, WORD, WORD, WORD, WORD, Ref{BYTE}, Ref{DWORD}, Ref{Metadata}, Ref{Timestamp}),
+    ccall(F, Cuint, (HANDLE, HANDLE, DWORD, WORD, WORD, WORD, WORD, Ptr{BYTE}, Ptr{DWORD}, Ptr{Metadata}, Ptr{Timestamp}),
      phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
 end
 
