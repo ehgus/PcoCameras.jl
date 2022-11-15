@@ -16,7 +16,7 @@ struct Openstruct
     OpenPtr::NTuple{6,Ptr{Cvoid}}
     Dummy::NTuple{8,WORD}
 
-    function Openstruct(;InterfaceType=0, CameraNumber=0,
+    function Openstruct(;InterfaceType=0xFFFF, CameraNumber=0,
                         wOpenFlags=Tuple(zeros(WORD, 10)),
                         dwOpenFlags=Tuple(zeros(DWORD, 5)),
                         OpenPtr=Tuple([Ptr{Cvoid}(0) for x in 1:6]))

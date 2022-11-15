@@ -26,8 +26,8 @@ mutable struct PcoCamera <: Camera
         try
             Wrapper.recording_state!(cam_handle,0)
             Wrapper.default!(cam_handle)
+            Wrapper.delay_exposure(cam_handle, 0, 10)
             Wrapper.arm!(cam_handle)
-            Wrapper.health(cam_handle)
         catch e
             if ~isa(e,Wrapper.CameraError)
                 throw(e)
@@ -67,6 +67,7 @@ function close!(cam::PcoCamera)
     end
     stop!(cam)
     Wrapper.delete(cam.rec_handle)
+    cam.rec_handle = HANDLE(0)
     Wrapper.close!(cam.cam_handle)
     cam.cam_handle = HANDLE(0)
     return
@@ -92,7 +93,7 @@ end
 function take!(cam::PcoCamera)
     # cam.image()
     # copy image from the data
-    wait_running(cam.rec_handle, cam.cam_handle)
+    Wrapper.wait_running(cam.rec_handle, cam.cam_handle)
     image = Wrapper.copy_image(cam.rec_handle, cam.cam_handle, cam.roi)
     return image
 end

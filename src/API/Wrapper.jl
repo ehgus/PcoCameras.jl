@@ -45,23 +45,29 @@ macro rccheck(apicall)
 end
 
 
-function recording_state!(cam_handle_ptr::HANDLE,state)
-    recstate = Ref(WORD(0))
-    @rccheck SDK.GetRecordingState(cam_handle_ptr,recstate)
-    if recstate[] != state
-        @rccheck SDK.SetRecordingState(cam_handle_ptr,state)
-    end
+function recording_state!(cam_handle::HANDLE,state)
+    @rccheck SDK.SetRecordingState(cam_handle,state)
 end
 
 
-function default!(cam_handle_ptr::HANDLE)
-    @rccheck SDK.ResetSettingsToDefault(cam_handle_ptr)
-    @rccheck SDK.SetBitAlignment(cam_handle_ptr,1)
+function default!(cam_handle::HANDLE)
+    metasize = Ref(WORD(0))
+    metaversion = Ref(WORD(0))
+    @rccheck SDK.ResetSettingsToDefault(cam_handle)
+    @rccheck SDK.SetTimestampMode(cam_handle, false)
+    @rccheck SDK.SetMetaDataMode(cam_handle, true, metasize, metaversion)
+    @rccheck SDK.SetBitAlignment(cam_handle,1)
 end
 
+"""
+Delay time (unit: ms)
+"""
+function delay_exposure(cam_handle::HANDLE, delay, exposure)
+    @rccheck SDK.SetDelayExposureTime(cam_handle, delay, exposure, 2, 2)
+end
 
-function arm!(cam_handle_ptr::HANDLE)
-    @rccheck SDK.ArmCamera(cam_handle_ptr)
+function arm!(cam_handle::HANDLE)
+    @rccheck SDK.ArmCamera(cam_handle)
 end
 
 const INTERFACE_DICT = Dict("FireWire" => 1,
@@ -73,7 +79,7 @@ const INTERFACE_DICT = Dict("FireWire" => 1,
 
 function open(interface::String)
     cam_handle_ptr = Ref{HANDLE}(0)
-    refoepnstruct = Openstruct(InterfaceType=INTERFACE_DICT[interface])
+    refoepnstruct = Ref(Openstruct(InterfaceType=INTERFACE_DICT[interface]))
     @rccheck SDK.OpenCameraEx(cam_handle_ptr, refoepnstruct)
     return cam_handle_ptr[]
 end
@@ -152,11 +158,11 @@ const REC_MODE_DICT = Dict("file"=>1, "memory"=>2, "camram"=>3)
 
 function create(cam_handle, mode = "memory",drive_letter='C')
     rec_handle_ptr = Ref(HANDLE(0))
-    cam_handle_arr = Ref(cam_handle)
-    img_distribution_arr = ones(DWORD, 1)
-    cam_count = 1
+    cam_handle_arr = [cam_handle]
+    cam_count = length(cam_handle_arr)
+    img_distribution_arr = ones(DWORD, cam_count)
     rec_mode = REC_MODE_DICT[mode]
-    MaxImgCountArr = Ref(DWORD(0))
+    MaxImgCountArr = zeros(DWORD, cam_count)
     
     @rccheck Recorder.Create(rec_handle_ptr, cam_handle_arr, img_distribution_arr, cam_count,
     rec_mode, drive_letter, MaxImgCountArr)
@@ -174,11 +180,13 @@ end
 const RECORDER_MODE_DICT = Dict("sequence"=>1, "ring buffer"=>2, "fifo"=>3)
 
 function init(rec_handle,img_count,mode="sequence")
+    cam_count = 1
     type = RECORDER_MODE_DICT[mode]
     overwrite = false
-    filepath = collect(Cchar,"C:/\0")
+    filepath = C_NULL
     ram_segment_arr = C_NULL
-    @rccheck Recorder.Init(rec_handle,Ref(DWORD(img_count)),1,type,overwrite,filepath,ram_segment_arr)
+    @rccheck Recorder.Init(rec_handle, Ref(DWORD(img_count)), cam_count, 
+                           type, overwrite, filepath, ram_segment_arr)
 end
 
 
@@ -210,8 +218,8 @@ function copy_image(rec_handle, cam_handle, roi)
     w = roi[3]-roi[1]+1
     h = roi[4]-roi[2]+1
     image = zeros(WORD,(w,h,img_cnt))
-    metadata = Metadata()
-    timestamp = Timestamp()
+    metadata = Ref(Metadata())
+    timestamp = C_NULL
     for img_idx = 0:img_cnt-1
         img_num = Ref(DWORD(0))
         @rccheck Recorder.CopyImage(rec_handle, cam_handle, img_idx, roi...,
