@@ -22,8 +22,9 @@ export PcoCamera,
     start!,
     stop!,
     take!,
-    trigger!,
-    reset!
+    trigger_mode,
+    trigger_mode!,
+    trigger!
 
 include("API/Wrapper.jl")
 include("PcoCamera.jl")

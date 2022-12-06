@@ -104,6 +104,14 @@ function take!(cam::PcoCamera)
     return image
 end
 
+function trigger_mode(cam::PcoCamera)
+    Wrapper.trigger_mode(cam.cam_handle)
+end
+
+function trigger_mode!(cam::PcoCamera,mode_name)
+    Wrapper.trigger_mode!(cam.cam_handle,mode_name)
+end
+
 function trigger!(cam::PcoCamera)
-    erorr("TODO level 2")
+    Wrapper.trigger!(cam.cam_handle)
 end

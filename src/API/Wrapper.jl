@@ -153,6 +153,27 @@ function configuration(cam_handle::HANDLE)
     return pixel_rate[], trigger_mode[], acquire_mode[], (binHorz[], binVert[])
 end
 
+const TRIGGER_MODE = ["auto", "SW", "HW&SW", "HW", "HW sync", "fast HW", "CDS", "slow HW"]
+
+function trigger_mode(cam_handle::HANDLE)
+    mode = Ref(WORD(0))
+    @rccheck SDK.GetTriggerMode(cam_handle, mode)
+    return TRIGGER_MODE[mode[]+1]
+end
+
+function trigger_mode!(cam_handle::HANDLE, mode_name)
+    mode = findfirst(x-> x==mode_name, TRIGGER_MODE)
+    @rccheck SDK.SetTriggerMode(cam_handle, mode)
+end
+
+function trigger!(cam_handle::HANDLE)
+    trigger_success = Ref(WORD(0))
+    @rccheck SDK.ForceTrigger(cam_handle, trigger_success)
+    if trigger_success == 0
+        @info "camera is already active"
+    end
+end
+
 # ----------------------------------------------------------------------
 #    Recorder wrapper
 # ----------------------------------------------------------------------
