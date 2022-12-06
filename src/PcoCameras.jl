@@ -23,8 +23,7 @@ export PcoCamera,
     stop!,
     take!,
     trigger!,
-    id,
-    timestamp
+    reset!
 
 include("API/Wrapper.jl")
 include("PcoCamera.jl")

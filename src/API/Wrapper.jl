@@ -44,6 +44,12 @@ macro rccheck(apicall)
     end)
 end
 
+"""
+Reset driver that close all opened cameras
+"""
+function reset!()
+    @rccheck SDK.ResetLib()
+end
 
 function recording_state!(cam_handle::HANDLE,state)
     @rccheck SDK.SetRecordingState(cam_handle,state)

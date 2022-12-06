@@ -1,4 +1,5 @@
 using .Wrapper.TypeAlias
+using .Wrapper: reset!
 
 mutable struct PcoCamera <: Camera
     cam_handle::HANDLE
