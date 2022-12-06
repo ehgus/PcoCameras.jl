@@ -215,10 +215,11 @@ end
 
 function copy_image(rec_handle, cam_handle, roi)
     img_cnt_ptr = Ref(DWORD(0))
-    @rccheck Recorder.GetStatus(rec_handle,cam_handle, C_NULL, C_NULL, C_NULL, img_cnt_ptr, 
-                C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
+    while img_cnt_ptr[] == 0
+        @rccheck Recorder.GetStatus(rec_handle,cam_handle, C_NULL, C_NULL, C_NULL, img_cnt_ptr, 
+                    C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
+    end
     img_cnt = img_cnt_ptr[]
-    @assert img_cnt > 0
     w = roi[3]-roi[1]+1
     h = roi[4]-roi[2]+1
     image = zeros(WORD,(w,h,img_cnt))
