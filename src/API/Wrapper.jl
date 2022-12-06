@@ -176,12 +176,16 @@ function delete(rec_handle)
     end
 end
 
-
-const RECORDER_MODE_DICT = Dict("sequence"=>1, "ring buffer"=>2, "fifo"=>3)
+const RECORDER_MODE_FILE = Dict("tif"=>1, "multi_tif"=>2, "pco_raw"=>3,"b16"=>4, "dicom"=>5, "multi_dicom"=>6)
+const RECORDER_MODE_MEMORY = Dict("sequence"=>1, "ring buffer"=>2, "fifo"=>3)
+const RECORDER_MODE_CAMRAM = Dict("sequential"=>1,"single_image"=>2)
 
 function init(rec_handle,img_count,mode="sequence")
     cam_count = 1
-    type = RECORDER_MODE_DICT[mode]
+    if mode == "ring buffer" || mode == "fifo"
+        @assert img_count >= 4 "Please use 4 or more image buffer on that mode"
+    end
+    type = RECORDER_MODE_MEMORY[mode]
     overwrite = false
     filepath = C_NULL
     ram_segment_arr = C_NULL

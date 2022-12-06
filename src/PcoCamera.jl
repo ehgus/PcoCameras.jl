@@ -73,17 +73,24 @@ function close!(cam::PcoCamera)
     return
 end
 
+"""
+Start Recording
+"""
 function start!(cam::PcoCamera,number_of_images::Integer = 1,mode="sequence")
-    # cam.record()
+    # Reset previous recorder handler
     if Wrapper.health(cam.cam_handle)["status"] & 2 == 0
         Wrapper.arm!(cam.cam_handle)
     end
     stop!(cam)
     Wrapper.delete(cam.rec_handle)
+    # create handler
     cam.rec_handle, max_img_count = Wrapper.create(cam.cam_handle)
     @assert number_of_images <= max_img_count "Maximum available images: $(max_img_count)"
     Wrapper.init(cam.rec_handle,number_of_images,mode)
     Wrapper.start_record(cam.rec_handle)
+    if mode == "sequence"
+        Wrapper.wait_running(cam.rec_handle, cam.cam_handle)
+    end
 end
 
 function stop!(cam::PcoCamera)
@@ -91,9 +98,7 @@ function stop!(cam::PcoCamera)
 end
 
 function take!(cam::PcoCamera)
-    # cam.image()
-    # copy image from the data
-    Wrapper.wait_running(cam.rec_handle, cam.cam_handle)
+    # copy image from the stack
     image = Wrapper.copy_image(cam.rec_handle, cam.cam_handle, cam.roi)
     return image
 end
