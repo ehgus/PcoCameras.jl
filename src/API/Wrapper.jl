@@ -163,7 +163,7 @@ end
 
 function trigger_mode!(cam_handle::HANDLE, mode_name)
     mode = findfirst(x-> x==mode_name, TRIGGER_MODE)
-    @rccheck SDK.SetTriggerMode(cam_handle, mode)
+    @rccheck SDK.SetTriggerMode(cam_handle, mode-1)
 end
 
 function trigger!(cam_handle::HANDLE)
