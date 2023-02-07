@@ -8,6 +8,7 @@ import Cameras:
     close!,
     isrunning,
     start!,
+    wait,
     stop!,
     take!,
     trigger!,
