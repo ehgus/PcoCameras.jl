@@ -232,12 +232,10 @@ function stop_record(rec_handle, cam_handle)
     end
 end
 
-function wait_running(rec_handle, cam_handle)
-    isrunning = Ref(bool(true))
-    while Bool(isrunning[])
-        @rccheck Recorder.GetStatus(rec_handle, cam_handle, isrunning, ntuple(_->C_NULL, 8)...)
-        sleep(1e-3)
-    end
+function isrunning(rec_handle, cam_handle)
+    is_running = Ref(bool(true))
+    @rccheck Recorder.GetStatus(rec_handle, cam_handle, is_running, ntuple(_->C_NULL, 8)...)
+    return is_running[]
 end
 
 function copy_image(rec_handle, cam_handle, roi)

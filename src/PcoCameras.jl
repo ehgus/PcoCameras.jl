@@ -1,6 +1,7 @@
 module PcoCameras
 
 using Cameras
+using Dates
 
 import Cameras:
     isopen,
@@ -8,6 +9,7 @@ import Cameras:
     close!,
     isrunning,
     start!,
+    wait,
     stop!,
     take!,
     trigger!,

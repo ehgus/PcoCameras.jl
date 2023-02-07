@@ -89,13 +89,20 @@ function start!(cam::PcoCamera,number_of_images::Integer = 1,mode="sequence")
     @assert number_of_images <= max_img_count "Maximum available images: $(max_img_count)"
     Wrapper.init(cam.rec_handle,number_of_images,mode)
     Wrapper.start_record(cam.rec_handle)
-    if mode == "sequence"
-        Wrapper.wait_running(cam.rec_handle, cam.cam_handle)
-    end
 end
 
 function stop!(cam::PcoCamera)
     Wrapper.stop_record(cam.rec_handle, cam.cam_handle)
+end
+
+function wait(cam::PcoCamera, timeout = 10)
+    start_time = now()
+    while Wrapper.isrunning(cam.rec_handle, cam.cam_handle) == 1
+        sleep(1e-3)
+        if now() - start_time > Second(10)
+            error("Timeout")
+        end
+    end
 end
 
 function take!(cam::PcoCamera)
