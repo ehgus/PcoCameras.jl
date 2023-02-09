@@ -2,6 +2,7 @@ module PcoCameras
 
 using Cameras
 using Dates
+using StaticArrays
 
 import Cameras:
     isopen,

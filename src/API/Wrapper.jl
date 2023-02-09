@@ -4,6 +4,8 @@ include("PcoStructs.jl")
 
 using .PcoStruct
 using .TypeAlias
+using ..StaticArrays
+
 # ----------------------------------------------------------------------
 #    Initialization
 # ----------------------------------------------------------------------
@@ -134,9 +136,9 @@ end
 
 
 function roi(cam_handle::HANDLE)
-    roi = zeros(WORD,4)
-    @rccheck SDK.GetROI(cam_handle, [@view(roi[i]) for i = 1:4]...)
-    return roi[1],roi[2],roi[3],roi[4]
+    roi = @MVector zeros(WORD,4)
+    @rccheck SDK.GetROI(cam_handle, [view(roi, i) for i = 1:4]...)
+    return roi
 end
 
 function configuration(cam_handle::HANDLE)
@@ -245,8 +247,7 @@ function copy_image(rec_handle, cam_handle, roi)
                     C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
     end
     img_cnt = img_cnt_ptr[]
-    w = roi[3]-roi[1]+1
-    h = roi[4]-roi[2]+1
+    w, h = roi[3:4] - roi[1:2] .+ 1
     image = zeros(WORD,(w,h,img_cnt))
     metadata = Ref(Metadata())
     timestamp = C_NULL

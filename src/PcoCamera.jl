@@ -7,7 +7,7 @@ mutable struct PcoCamera <: Camera
     # camera type
     cam_name::String
     # camera configuration
-    roi::NTuple{4,Integer}
+    roi::MVector{4, UInt16}
     # logging
     debugLv::String
     timestamp::Bool
