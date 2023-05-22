@@ -4,7 +4,7 @@ PcoCameras is a julia interface for PCO cameras.
 This package is based on a generic camera framework [Cameras.jl](https://github.com/IHPSystems/Cameras.jl) and also offers direct access to low-level APIs of PCO cameras (PCO_SDK and PCO_Recorder).
 
 There are packages offering similar features:
-- [Ionimaging.jl](https://gitlab.com/mnkmr/Ionimaging.jl) is the first julia package for controlling PCO cameras. Two reasons decide me to make this new package.
+- [Ionimaging.jl](https://gitlab.com/mnkmr/Ionimaging.jl) is the first julia package for PCO cameras. Following reasons decide me to make this new package.
     - It does not work with GigE PCO cameras.
     - It searches cameras available when loading the package. It is time-consuming and unnecessary for some purpose.
     - I suggest Julia community provides camera APIs following some standard.
