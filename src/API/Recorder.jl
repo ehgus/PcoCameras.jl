@@ -10,7 +10,7 @@ const Recorder_DLL = Ref{Ptr{Cvoid}}(0)
 function __init__()
     Recorder_DLL[] = dlopen(joinpath(dir_path,"PCO_Recorder.dll"))
     if ResetLib(false) != 0
-        error("Recorder initializaiton is failed")
+        @error("Recorder initializaiton is failed")
     end
 end
 

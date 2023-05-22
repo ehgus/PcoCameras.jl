@@ -49,7 +49,7 @@ end
 """
 Reset driver that close all opened cameras
 """
-function reset!()
+function reset()
     @rccheck SDK.ResetLib()
 end
 

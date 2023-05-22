@@ -1,53 +1,35 @@
 using .Wrapper.TypeAlias
-using .Wrapper: reset!
+using .Wrapper: INTERFACE_DICT, reset
 
 mutable struct PcoCamera <: Camera
     cam_handle::HANDLE
     rec_handle::HANDLE
     # camera type
+    interface::String
     cam_name::String
     # camera configuration
     roi::MVector{4, UInt16}
     # logging
-    debugLv::String
     timestamp::Bool
 
-    function PcoCamera(interface::String,debugLv="off",timestamp=false)
-        # try connecting available camera
-        cam_handle = try
-            Wrapper.open(interface)
-        catch e
-            if ~isa(e,Wrapper.CameraError)
-                throw(e)
-            end
-            error("No camera found."*
-            " Please check the connection and close other process which use the camera")
+    function PcoCamera(interface::String,timestamp=false)
+        # check interface
+        if !haskey(INTERFACE_DICT, interface)
+            @error("Available interfaces are $(join(keys(INTERFACE_DICT), ", "))")
         end
-        # set camera to default state
-        try
-            Wrapper.recording_state!(cam_handle,0)
-            Wrapper.default!(cam_handle)
-            Wrapper.delay_exposure(cam_handle, 0, 10)
-            Wrapper.arm!(cam_handle)
-        catch e
-            if ~isa(e,Wrapper.CameraError)
-                throw(e)
-            end
-            Wrapper.close(cam_handle)
-            error("The camera initialization has been failed\n--> $(e.msg)")
+        if timestamp
+            @warn("Timestamping is not yet implemented yet")
         end
-        # return PcoCamera
-        cam_name = Wrapper.name(cam_handle)
-        roi = Wrapper.roi(cam_handle)
-        new(cam_handle,HANDLE(0), cam_name,
-            roi,#exposure_time, trigger, binning, 
-            debugLv,timestamp)
+        cam_name = ""
+        roi = @MVector zeros(WORD,4)
+        new(HANDLE(0), HANDLE(0), interface, cam_name, roi, timestamp)
     end
 end
 
-
 function info(cam::PcoCamera)
-    erorr("TODO")
+    @info("Camera name: $(cam.cam_name)\n"*
+        "Interface: $(cam.interface)\n"*
+        "ROI: X = [$(cam.roi[1]), $(cam.roi[3])], Y = [$(cam.roi[2]), $(cam.roi[4])]")
 end
 
 function isopen(cam::PcoCamera) 
@@ -59,7 +41,33 @@ function open!(cam::PcoCamera)
         return cam
     end
 
-    erorr("TODO")
+    cam_handle = try
+        Wrapper.open(cam.interface)
+    catch e
+        if ~isa(e, Wrapper.CameraError)
+            throw(e)
+        end
+        @error("No camera found."*
+        " Please check the connection and close other process which use the camera")
+    end
+    # set camera to default state
+    try
+        Wrapper.recording_state!(cam_handle,0)
+        Wrapper.default!(cam_handle)
+        Wrapper.delay_exposure(cam_handle, 0, 10)
+        Wrapper.arm!(cam_handle)
+    catch e
+        if ~isa(e,Wrapper.CameraError)
+            throw(e)
+        end
+        Wrapper.close(cam_handle)
+        @error("The camera initialization has been failed\n--> $(e.msg)")
+    end
+    # return PcoCamera 
+    cam.cam_handle = cam_handle
+    cam.cam_name = Wrapper.name(cam_handle)
+    cam.roi = Wrapper.roi(cam_handle)
+    return cam
 end
 
 function close!(cam::PcoCamera)
@@ -100,7 +108,7 @@ function wait(cam::PcoCamera, timeout = 10)
     while Wrapper.isrunning(cam.rec_handle, cam.cam_handle) == 1
         sleep(1e-3)
         if now() - start_time > Second(10)
-            error("Timeout")
+            @error("Timeout")
         end
     end
 end
@@ -108,7 +116,7 @@ end
 function take!(cam::PcoCamera)
     # copy image from the stack
     image = Wrapper.copy_image(cam.rec_handle, cam.cam_handle, cam.roi)
-    return image
+    return AcquiredImage(image, 0, 0)
 end
 
 function trigger_mode(cam::PcoCamera)

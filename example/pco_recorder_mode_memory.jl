@@ -43,7 +43,7 @@ metaVersion = Ref(WORD(0))
 # Open camera and set to default state
 camstruct = Ref(PcoStruct.Openstruct())
 if SDK.OpenCameraEx(@view(hCamArr[1]), camstruct) != 0
-    error("No camera found.\nPress <Enter> to end\n")
+    @error("No camera found.\nPress <Enter> to end\n")
 end
 # Make sure recording is off
 @rccheck SDK.SetRecordingState(hCamArr[1], 0)
