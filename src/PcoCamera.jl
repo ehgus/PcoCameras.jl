@@ -105,13 +105,16 @@ end
 
 function wait(cam::PcoCamera, timeout = 10)
     start_time = now()
-    while Wrapper.isrunning(cam.rec_handle, cam.cam_handle) == 1
+    while isrunning(cam)
         sleep(1e-3)
         if now() - start_time > Second(timeout)
             @error("Timeout")
+            break
         end
     end
 end
+
+isrunning(cam::PcoCamera) = Wrapper.isrunning(cam.rec_handle, cam.cam_handle) == 1
 
 function take!(cam::PcoCamera)
     # copy image from the stack

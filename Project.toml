@@ -1,7 +1,7 @@
 name = "PcoCameras"
 uuid = "cecd365b-c245-4458-9b9e-f698bdbf71a7"
 authors = ["Dohyeon Lee <dleh428@kaist.ac.kr>"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 Cameras = "6410b9bd-72f2-532f-9386-433801972073"
