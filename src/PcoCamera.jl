@@ -107,7 +107,7 @@ function wait(cam::PcoCamera, timeout = 10)
     start_time = now()
     while Wrapper.isrunning(cam.rec_handle, cam.cam_handle) == 1
         sleep(1e-3)
-        if now() - start_time > Second(10)
+        if now() - start_time > Second(timeout)
             @error("Timeout")
         end
     end

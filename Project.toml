@@ -1,9 +1,10 @@
 name = "PcoCameras"
 uuid = "cecd365b-c245-4458-9b9e-f698bdbf71a7"
 authors = ["Dohyeon Lee <dleh428@kaist.ac.kr>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Cameras = "6410b9bd-72f2-532f-9386-433801972073"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
