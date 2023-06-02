@@ -70,8 +70,17 @@ end
 """
 Delay time (unit: ms)
 """
-function delay_exposure(cam_handle::HANDLE, delay, exposure)
-    @rccheck SDK.SetDelayExposureTime(cam_handle, delay, exposure, 2, 2)
+function delay_exposure(cam_handle::HANDLE)
+    delay = Ref(DWORD(0))
+    exposure = Ref(DWORD(0))
+    delay_base = Ref(WORD(0))
+    exposure_base = Ref(WORD(0))
+    @rccheck SDK.GetDelayExposureTime(cam_handle, delay, exposure, delay_base, exposure_base)
+    return delay[] * 10^(-6+3*delay_base[]), exposure[] * 10^(-6+3*exposure_base[])
+end
+
+function delay_exposure!(cam_handle::HANDLE, delay, exposure)
+    @rccheck SDK.SetDelayExposureTime(cam_handle, round(DWORD, delay), round(DWORD, exposure), 2, 2)
 end
 
 function arm!(cam_handle::HANDLE)

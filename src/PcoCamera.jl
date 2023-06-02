@@ -54,7 +54,6 @@ function open!(cam::PcoCamera)
     try
         Wrapper.recording_state!(cam_handle,0)
         Wrapper.default!(cam_handle)
-        Wrapper.delay_exposure(cam_handle, 0, 10)
         Wrapper.arm!(cam_handle)
     catch e
         if ~isa(e,Wrapper.CameraError)
