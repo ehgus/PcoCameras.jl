@@ -1,6 +1,6 @@
 module Wrapper
-include("TypeAlias.jl")
-include("PcoStructs.jl")
+include("alias.jl")
+include("pco_struct.jl")
 
 using .PcoStruct
 using .TypeAlias
@@ -18,7 +18,7 @@ end
 #    SDK wrapper
 # ----------------------------------------------------------------------
 
-include("SDK.jl")
+include("pco_sc2_cam_lib.jl")
 
 
 struct CameraError <: Exception
@@ -189,7 +189,7 @@ end
 #    Recorder wrapper
 # ----------------------------------------------------------------------
 
-include("Recorder.jl")
+include("pco_recorder_lib.jl")
 
 
 const REC_MODE_DICT = Dict("file"=>1, "memory"=>2, "camram"=>3)

@@ -29,7 +29,7 @@ export PcoCamera,
     trigger_mode!,
     trigger!
 
-include("API/Wrapper.jl")
-include("PcoCamera.jl")
+include("API/wrapper.jl")
+include("camera.jl")
 
 end # module PcoCameras
