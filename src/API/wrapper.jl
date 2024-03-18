@@ -181,7 +181,7 @@ function trigger!(cam_handle::HANDLE)
     trigger_success = Ref(WORD(0))
     @rccheck SDK.ForceTrigger(cam_handle, trigger_success)
     if trigger_success == 0
-        @info "camera is already active"
+        @warn "camera is already active"
     end
 end
 

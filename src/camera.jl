@@ -12,17 +12,14 @@ mutable struct PcoCamera <: Camera
     # logging
     timestamp::Bool
 
-    function PcoCamera(interface::String,timestamp=false)
+    function PcoCamera(interface::String)
         # check interface
         if !haskey(INTERFACE_DICT, interface)
-            @error("Available interfaces are $(join(keys(INTERFACE_DICT), ", "))")
-        end
-        if timestamp
-            @warn("Timestamping is not yet implemented yet")
+            error("Available interfaces are $(join(keys(INTERFACE_DICT), ", "))")
         end
         cam_name = ""
         roi = @MVector zeros(WORD,4)
-        new(HANDLE(0), HANDLE(0), interface, cam_name, roi, timestamp)
+        new(HANDLE(0), HANDLE(0), interface, cam_name, roi, false)
     end
 end
 
@@ -47,7 +44,7 @@ function open!(cam::PcoCamera)
         if ~isa(e, Wrapper.CameraError)
             throw(e)
         end
-        @error("No camera found."*
+        error("No camera found."*
         " Please check the connection and close other process which use the camera")
     end
     # set camera to default state
@@ -60,7 +57,7 @@ function open!(cam::PcoCamera)
             throw(e)
         end
         Wrapper.close(cam_handle)
-        @error("The camera initialization has been failed\n--> $(e.msg)")
+        error("The camera initialization has been failed\n--> $(e.msg)")
     end
     # return PcoCamera 
     cam.cam_handle = cam_handle
@@ -107,7 +104,7 @@ function wait(cam::PcoCamera, timeout = 10)
     while isrunning(cam)
         sleep(1e-3)
         if now() - start_time > Second(timeout)
-            @error("Timeout")
+            error("Timeout")
             break
         end
     end
