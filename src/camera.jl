@@ -19,7 +19,8 @@ mutable struct PcoCamera <: Camera
         end
         cam_name = ""
         roi = @MVector zeros(WORD,4)
-        new(HANDLE(0), HANDLE(0), interface, cam_name, roi, false)
+        cam = new(HANDLE(0), HANDLE(0), interface, cam_name, roi, false)
+        finalizer(close!, cam)
     end
 end
 
