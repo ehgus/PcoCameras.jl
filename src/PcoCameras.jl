@@ -1,33 +1,20 @@
 module PcoCameras
 
-using Cameras
+using Reexport
+@reexport using VariableIOs
+@reexport using VariableIOs.VariableArrayIOs
 using StaticArrays
 using Dates
 
-import Cameras:
+import Base:
+    show,
+    open,
+    close,    
     isopen,
-    open!,
-    close!,
-    isrunning,
-    start!,
+    # while execution
     wait,
-    stop!,
-    take!,
-    trigger!,
-    id,
-    timestamp
-
-export PcoCamera,
-    isopen,
-    open!,
-    close!,
-    isrunning,
-    start!,
-    stop!,
-    take!,
-    trigger_mode,
-    trigger_mode!,
-    trigger!
+    read
+export PcoCamera
 
 include("API/wrapper.jl")
 include("camera.jl")

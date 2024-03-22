@@ -111,10 +111,10 @@ function SetCompressionParams(phRec, phCam, compressionParams)
 end
 
 
-function GetStatus(phRec, phCam, IsRunning, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
+function GetStatus(phRec, phCam, isactivated, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetStatus)
     ccall(F, Cuint, (HANDLE, HANDLE, Ptr{bool}, Ptr{bool}, Ptr{DWORD}, Ptr{DWORD}, Ptr{DWORD}, Ptr{bool}, Ptr{bool}, Ptr{DWORD}, Ptr{DWORD}),
-     phRec, phCam, IsRunning, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
+     phRec, phCam, isactivated, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
 end
 
 

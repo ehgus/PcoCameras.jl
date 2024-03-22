@@ -102,7 +102,7 @@ function open(interface::String)
 end
 
 
-function close!(cam_handle::HANDLE)
+function close(cam_handle::HANDLE)
     @rccheck SDK.CloseCamera(cam_handle)
 end
 
@@ -177,7 +177,7 @@ function trigger_mode!(cam_handle::HANDLE, mode_name)
     @rccheck SDK.SetTriggerMode(cam_handle, mode-1)
 end
 
-function trigger!(cam_handle::HANDLE)
+function trigger(cam_handle::HANDLE)
     trigger_success = Ref(WORD(0))
     @rccheck SDK.ForceTrigger(cam_handle, trigger_success)
     if trigger_success == 0
@@ -243,7 +243,7 @@ function stop_record(rec_handle, cam_handle)
     end
 end
 
-function isrunning(rec_handle, cam_handle)
+function isactivated(rec_handle, cam_handle)
     is_running = Ref(bool(true))
     @rccheck Recorder.GetStatus(rec_handle, cam_handle, is_running, ntuple(_->C_NULL, 8)...)
     return is_running[]

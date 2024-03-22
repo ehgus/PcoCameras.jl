@@ -1,13 +1,13 @@
 # PcoCameras.jl
 
 PcoCameras is a Julia interface for PCO cameras.
-This package is based on a generic camera framework [Cameras.jl](https://github.com/IHPSystems/Cameras.jl) and also offers direct access to low-level APIs of PCO cameras (PCO_SDK and PCO_Recorder).
+This package is based on a experimental IO framework [VariableIOs.jl](https://github.com/ehgus/VariableIOs.jl) and also offers direct access to low-level APIs of PCO cameras (PCO_SDK and PCO_Recorder).
 
 There are packages offering similar features:
 - [Ionimaging.jl](https://gitlab.com/mnkmr/Ionimaging.jl) is the first Julia package for PCO cameras. The following reasons have decided me to make this new package.
     - It does not work with GigE PCO cameras.
     - It searches for cameras available when loading the package. It is time-consuming and unnecessary for some purposes.
-    - Camera API should be implemented consistently. `Cameras.jl` looks like an answer.
+    - Camera API should be implemented consistently.
 - [pco](https://pypi.org/project/pco/) is a offical python package. `PcoCameras.jl`'s internal structure is similar to the Python package.
 
 ## Installation
@@ -25,25 +25,25 @@ using PcoCameras
 
 # start camera
 cam = PcoCamera("GigE")
-open!(cam)
+cam_io = open(cam)
 
 # configure options
-trigger_mode!(cam, "auto")
-@show trigger_mode(cam)
+trigger_mode!(cam_io, "auto")
+@show trigger_mode(cam_io)
 
 # start acquisition
-number_of_images = 4
-mode="fifo"
-start!(cam, number_of_images, mode)
+buffer_mode!(cam_io, "memory","fifo")
+buffer_size!(cam_io, number_of_images = 4)
+activate(cam_io)
 
 # take acquisition
-acquired_image = take!(cam)
+acquired_image = read(cam_io)
 
 # stop acquisition
-stop!(cam)
+deactivate(cam_io)
 
 # Close camera
-close!(cam)
+close(cam_io)
 ```
 
 ## Example (Low-level API)
