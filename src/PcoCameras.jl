@@ -1,10 +1,22 @@
 module PcoCameras
 
 using Reexport
-@reexport using VariableIOs
-@reexport using VariableIOs.VariableArrayIOs
+using VariableIOs
+using VariableIOs.VariableArrayIOs
 using StaticArrays
 using Dates
+
+@reexport import VariableIOs:
+    activate,
+    deactivate,
+    isactivated,
+    trigger_mode,
+    trigger_mode!,
+    buffer_mode,
+    buffer_mode!,
+    buffer_size,
+    buffer_size!,
+    trigger
 
 import Base:
     show,

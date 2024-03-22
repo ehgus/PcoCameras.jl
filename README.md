@@ -30,25 +30,14 @@ using PcoCameras
 
 # start camera
 cam = PcoCamera("GigE")
-cam_io = open(cam)
-
-# configure options
-trigger_mode!(cam_io, "auto")
-@show trigger_mode(cam_io)
-
-# start acquisition
-buffer_mode!(cam_io, "memory","fifo")
-buffer_size!(cam_io, number_of_images = 4)
-activate(cam_io)
-
-# take acquisition
-acquired_image = read(cam_io)
-
-# stop acquisition
-deactivate(cam_io)
-
-# Close camera
-close(cam_io)
+acquired_image = open(cam) do io
+    trigger_mode!(io, "auto")
+    buffer_mode!(io, "memory","fifo")
+    buffer_size!(io, number_of_images = 4)
+    activate(io) do activated_io
+        read(activated_io)
+    end
+end
 ```
 
 ## Example (Low-level API)
