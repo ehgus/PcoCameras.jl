@@ -15,6 +15,11 @@ There are packages offering similar features:
 You need to pre-install pco.sdk and pco.recorder to use the package. The development kits are available on the [PCO website](https://www.pco-imaging.com/).
 When installing the development kits, they should be installed system-wide for now.
 
+It additionally requires `VariableIOs`.Therefore, to install this package, you should type
+```Julia REPL
+julia> ]add https://github.com/ehgus/VariableIOs.jl https://github.com/ehgus/PcoCameras.jl
+```
+
 ## Example (High-level API)
 
 ```Julia
