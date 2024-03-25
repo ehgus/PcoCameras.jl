@@ -91,6 +91,14 @@ function trigger_mode!(cam::PcoCameraIOStream,mode_name)
     Wrapper.trigger_mode!(cam.cam_handle,mode_name)
 end
 
+function timing_mode(cam::PcoCameraIOStream)
+    error("Not implemented")
+end
+
+function timing_mode!(cam::PcoCameraIOStream,args...;kwargs...)
+    error("Not implemented")
+end
+
 function buffer_mode(cam::PcoCameraIOStream)
     return cam.memory_type, cam.buffer_type, cam.number_of_images
 end

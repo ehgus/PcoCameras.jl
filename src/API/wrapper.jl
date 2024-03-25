@@ -6,19 +6,11 @@ using .PcoStruct
 using .TypeAlias
 
 # ----------------------------------------------------------------------
-#    Initialization
-# ----------------------------------------------------------------------
-
-function __init__()
-end
-
-
-# ----------------------------------------------------------------------
 #    SDK wrapper
 # ----------------------------------------------------------------------
 
 include("pco_sc2_cam_lib.jl")
-
+include("pco_recorder_lib.jl")
 
 struct CameraError <: Exception
     msg::String
@@ -59,6 +51,8 @@ const INTERFACE_DICT = Dict("FireWire" => 1,
 "USB 3.0"=> 8,
 "CLHS"=> 11)
 
+# Basic I/O
+
 function open()
     cam_handle_ptr = Ref{HANDLE}(0)
     @rccheck SDK.OpenCamera(cam_handle_ptr)
@@ -76,6 +70,29 @@ function close(cam_handle::HANDLE)
     @rccheck SDK.CloseCamera(cam_handle)
 end
 
+# I/O configuration
+
+const TRIGGER_MODE = ["auto", "SW", "HW&SW", "HW", "HW sync", "fast HW", "CDS", "slow HW"]
+
+function trigger_mode(cam_handle::HANDLE)
+    mode = Ref(WORD(0))
+    @rccheck SDK.GetTriggerMode(cam_handle, mode)
+    return TRIGGER_MODE[mode[]+1]
+end
+
+function trigger_mode!(cam_handle::HANDLE, mode_name)
+    mode = findfirst(x-> x==mode_name, TRIGGER_MODE)
+    @rccheck SDK.SetTriggerMode(cam_handle, mode-1)
+end
+
+function trigger(cam_handle::HANDLE)
+    trigger_success = Ref(WORD(0))
+    @rccheck SDK.ForceTrigger(cam_handle, trigger_success)
+    if trigger_success == 0
+        @warn "camera is already active"
+    end
+end
+
 function region_of_interest(cam_handle::HANDLE)
     roi = zeros(WORD,(4,))
     @rccheck SDK.GetROI(cam_handle, [view(roi, i) for i = 1:4]...)
@@ -85,7 +102,6 @@ end
 function recording_state!(cam_handle::HANDLE,state)
     @rccheck SDK.SetRecordingState(cam_handle,state)
 end
-
 
 function default!(cam_handle::HANDLE)
     metasize = Ref(WORD(0))
@@ -116,82 +132,7 @@ function arm(cam_handle::HANDLE)
     @rccheck SDK.ArmCamera(cam_handle)
 end
 
-function health(cam_handle::HANDLE)
-    args = [Ref(DWORD(0)), Ref(DWORD(0)), Ref(DWORD(0))]
-    SDK.GetCameraHealthStatus(cam_handle, args...)
-    state = Dict("warn"=>args[1][],"err"=>args[2][],"status"=>args[3][])
-    if state["err"] != 0
-        throw(CameraError("Camera has error status"))
-    end
-    return state
-end
-
-const CAMNAME_DICT = Dict(
-    0x0100=>"pco.1200HS",0x0200=>"pco.1200",0x0220=>"pco.1600",
-    0x0240=>"pco.2000",0x0260=>"pco.4000",0x0830=>"pco.1400",
-    0x1000=>"pco.dimax",0x1010=>"pco.dimax_TV",0x1020=>"pco.dimax CS",
-    0x1400=>"pco.flim",0x1500=>"pco.pandas",0x0800=>"pco.pixelfly usb",
-    0x1300=>"pco.edge 5.5 CL",0x1302=>"pco.edge 4.2 CL",0x1310=>"pco.edge GL",
-    0x1320=>"pco.edge USB3",0x1340=>"pco.edge CLHS",0x1304=>"pco.edge MT")
-
-function type(cam_handle::HANDLE)
-    cam_type = CameraType()
-    @rccheck SDK.GetCameraType(cam_handle, cam_type)
-    cam_name = CAMNAME_DICT[cam_type.CamType]
-    serial_num =cam_type.SerialNumber
-    return cam_name,serial_num
-end
-
-
-const CAMERA_NAME_LEN = 40
-
-function name(cam_handle::HANDLE)
-    name = zeros(Cchar, CAMERA_NAME_LEN)
-    @rccheck SDK.GetCameraName(cam_handle, name, CAMERA_NAME_LEN)
-    name[end] = 0
-    unsafe_string(pointer(name))
-end
-
-function configuration(cam_handle::HANDLE)
-    pixel_rate = Ref(DWORD(0))
-    trigger_mode = Ref(WORD(0))
-    acquire_mode = Ref(WORD(0))
-    binHorz = Ref(WORD(0))
-    binVert = Ref(WORD(0))
-    SDK.GetPixelRate(cam_handle,pixel_rate)
-    SDK.GetTriggerMode(cam_handle,trigger_mode)
-    SDK.GetAcquireMode(cam_handle,acquire_mode)
-    SDK.GetBinning(cam_handle,binHorz,binVert)
-    
-    return pixel_rate[], trigger_mode[], acquire_mode[], (binHorz[], binVert[])
-end
-
-const TRIGGER_MODE = ["auto", "SW", "HW&SW", "HW", "HW sync", "fast HW", "CDS", "slow HW"]
-
-function trigger_mode(cam_handle::HANDLE)
-    mode = Ref(WORD(0))
-    @rccheck SDK.GetTriggerMode(cam_handle, mode)
-    return TRIGGER_MODE[mode[]+1]
-end
-
-function trigger_mode!(cam_handle::HANDLE, mode_name)
-    mode = findfirst(x-> x==mode_name, TRIGGER_MODE)
-    @rccheck SDK.SetTriggerMode(cam_handle, mode-1)
-end
-
-function trigger(cam_handle::HANDLE)
-    trigger_success = Ref(WORD(0))
-    @rccheck SDK.ForceTrigger(cam_handle, trigger_success)
-    if trigger_success == 0
-        @warn "camera is already active"
-    end
-end
-
-# ----------------------------------------------------------------------
-#    Recorder wrapper
-# ----------------------------------------------------------------------
-
-include("pco_recorder_lib.jl")
+# activation & I/O operation
 
 
 const REC_MODE_DICT = Dict("file"=>1, "memory"=>2, "camram"=>3)
@@ -208,7 +149,6 @@ function create(cam_handle, mode = "memory",drive_letter='C')
     rec_mode, drive_letter, MaxImgCountArr)
     return rec_handle_ptr[], MaxImgCountArr[]
 end
-
 
 function delete(rec_handle)
     if rec_handle != HANDLE(0)
@@ -275,5 +215,56 @@ function copy_image(rec_handle, cam_handle; x_min, y_min, x_max, y_max)
     return image
 end
 
+# Description
+
+function health(cam_handle::HANDLE)
+    args = [Ref(DWORD(0)), Ref(DWORD(0)), Ref(DWORD(0))]
+    SDK.GetCameraHealthStatus(cam_handle, args...)
+    state = Dict("warn"=>args[1][],"err"=>args[2][],"status"=>args[3][])
+    if state["err"] != 0
+        throw(CameraError("Camera has error status"))
+    end
+    return state
+end
+
+const CAMNAME_DICT = Dict(
+    0x0100=>"pco.1200HS",0x0200=>"pco.1200",0x0220=>"pco.1600",
+    0x0240=>"pco.2000",0x0260=>"pco.4000",0x0830=>"pco.1400",
+    0x1000=>"pco.dimax",0x1010=>"pco.dimax_TV",0x1020=>"pco.dimax CS",
+    0x1400=>"pco.flim",0x1500=>"pco.pandas",0x0800=>"pco.pixelfly usb",
+    0x1300=>"pco.edge 5.5 CL",0x1302=>"pco.edge 4.2 CL",0x1310=>"pco.edge GL",
+    0x1320=>"pco.edge USB3",0x1340=>"pco.edge CLHS",0x1304=>"pco.edge MT")
+
+function type(cam_handle::HANDLE)
+    cam_type = CameraType()
+    @rccheck SDK.GetCameraType(cam_handle, cam_type)
+    cam_name = CAMNAME_DICT[cam_type.CamType]
+    serial_num =cam_type.SerialNumber
+    return cam_name,serial_num
+end
+
+
+const CAMERA_NAME_LEN = 40
+
+function name(cam_handle::HANDLE)
+    name = zeros(Cchar, CAMERA_NAME_LEN)
+    @rccheck SDK.GetCameraName(cam_handle, name, CAMERA_NAME_LEN)
+    name[end] = 0
+    unsafe_string(pointer(name))
+end
+
+function configuration(cam_handle::HANDLE)
+    pixel_rate = Ref(DWORD(0))
+    trigger_mode = Ref(WORD(0))
+    acquire_mode = Ref(WORD(0))
+    binHorz = Ref(WORD(0))
+    binVert = Ref(WORD(0))
+    SDK.GetPixelRate(cam_handle,pixel_rate)
+    SDK.GetTriggerMode(cam_handle,trigger_mode)
+    SDK.GetAcquireMode(cam_handle,acquire_mode)
+    SDK.GetBinning(cam_handle,binHorz,binVert)
+    
+    return pixel_rate[], trigger_mode[], acquire_mode[], (binHorz[], binVert[])
+end
 
 end
