@@ -11,7 +11,7 @@ export
     SC2_Hardware_DESC, SC2_Firmware_DESC, HW_Vers, FW_Vers, CameraType, General,
     # SDK-Sensor
     # SDK-Timing
-
+    Timing,
     # SDK-Recording
     # SDK-Storage
     # SDK-Image acquisition
@@ -20,27 +20,36 @@ export
     # Recorder
     CompressionParams, Timestamp
 
-struct Openstruct
-    Size::WORD
-    InterfaceType::WORD
+macro zeros(expr)
+    expr = macroexpand(__module__, expr)
+    Meta.isexpr(expr, :struct) || error("Invalid usage of @zeros")
+    blk = expr.args[3]
+    for i in eachindex(blk.args)
+        ei = blk.args[i]
+        if ei isa Expr && ei.head === :(::)
+            defexpr = ei.args[2]
+            zero_val = :(ntuple(_->UInt8(0),sizeof($defexpr)))
+            init_val = Expr(:call, :reinterpret, defexpr, zero_val)
+            blk.args[i] = Expr(:(=),ei, init_val)
+        end
+    end
+    expr.args[3] = blk
+    return expr
+end
+
+@kwdef @zeros struct Openstruct
+    Size::WORD = sizeof(Openstruct)
+    InterfaceType::WORD = 0xFFFF
     CameraNumber::WORD
     CameraNumAtInterface::WORD
     wOpenFlags::NTuple{10,WORD}
     dwOpenFlags::NTuple{5,DWORD}
     OpenPtr::NTuple{6,Ptr{Cvoid}}
     Dummy::NTuple{8,WORD}
-
-    function Openstruct(;InterfaceType=0xFFFF, CameraNumber=0,
-                        wOpenFlags=Tuple(zeros(WORD, 10)),
-                        dwOpenFlags=Tuple(zeros(DWORD, 5)),
-                        OpenPtr=Tuple([Ptr{Cvoid}(0) for x in 1:6]))
-        type_size = sizeof(Openstruct)
-        new(type_size, InterfaceType, CameraNumber, 0, wOpenFlags, dwOpenFlags, OpenPtr, Tuple(zeros(WORD, 8)))
-    end
 end
 
-struct Description
-    Size::WORD
+@kwdef @zeros struct Description
+    Size::WORD = sizeof(Description)
     SensorTypeDESC::WORD
     SensorSubTypeDESC::WORD
     MaxHorzResStdDESC::WORD
@@ -93,18 +102,10 @@ struct Description
     GeneralCapsDESC3::DWORD
     GeneralCapsDESC4::DWORD
     Dummy::NTuple{40,DWORD}
-
-    function Description()
-        type_size = sizeof(Description)
-        z = zeros(Cuchar,type_size)
-        reinterpret(WORD,@view(z[1:sizeof(WORD)]))[1] = type_size
-        h = reinterpret(Description, z)[1]
-        return h
-    end
 end
 
-struct Description2
-    Size::WORD
+@kwdef @zeros struct Description2
+    Size::WORD = sizeof(Description2)
     AlignDummy1::WORD
     MinPeriodicalTimeDESC2::DWORD
     MaxPeriodicalTimeDESC2::DWORD
@@ -124,69 +125,38 @@ struct Description2
     ModulateCapsDESC2::DWORD
     Reserved::NTuple{16,DWORD}
     Dummy::NTuple{41,DWORD}
-
-    function Description2()
-        type_size = sizeof(Description2)
-        z = zeros(Cuchar,type_size)
-        reinterpret(WORD,@view(z[1:sizeof(WORD)]))[1] = type_size
-        h = reinterpret(Description2, z)[1]
-        return h
-    end
 end
 
-struct SC2_Hardware_DESC
+@kwdef @zeros struct SC2_Hardware_DESC
     Name::NTuple{16,Cchar}
     BatchNo::WORD
     Revision::WORD
     Variant::WORD
     Dummy::NTuple{20,WORD}
-
-    function SC2_Hardware_DESC()
-        type_size = sizeof(SC2_Hardware_DESC)
-        z = zeros(Cuchar,type_size)
-        reinterpret(WORD,@view(z[1:sizeof(WORD)]))[1] = type_size
-        h = reinterpret(SC2_Hardware_DESC, z)[1]
-        return h
-    end
 end
 
-struct SC2_Firmware_DESC
+@kwdef @zeros struct SC2_Firmware_DESC
     Name::NTuple{16,Cchar}
     MinorRev::BYTE
     MajorRev::BYTE
     Variant::WORD
     Dummy::NTuple{22,WORD}
-    function SC2_Firmware_DESC()
-        type_size = sizeof(SC2_Firmware_DESC)
-        z = zeros(Cuchar,type_size)
-        reinterpret(WORD,@view(z[1:sizeof(WORD)]))[1] = type_size
-        h = reinterpret(SC2_Firmware_DESC, z)[1]
-        return h
-    end
 end
 
 const MAXVERSIONHW = 10
-struct HW_Vers
+@kwdef @zeros struct HW_Vers
     BoardNum::WORD
-    Board::NTuple{MAXVERSIONHW,SC2_Hardware_DESC}
-
-    function HW_Vers()
-        new(0, ntuple(i -> SC2_Hardware_DESC(), MAXVERSIONHW))
-    end
+    Board::NTuple{MAXVERSIONHW,SC2_Hardware_DESC} = ntuple(_ -> SC2_Hardware_DESC(), MAXVERSIONHW)
 end
 
 const MAXVERSIONFW = 10
-struct FW_Vers
+@kwdef @zeros struct FW_Vers
     DeviceNum::WORD
-    Device::NTuple{MAXVERSIONFW,SC2_Firmware_DESC}
-
-    function FW_Vers()
-        new(0, ntuple(i -> SC2_Firmware_DESC(), MAXVERSIONFW))
-    end
+    Device::NTuple{MAXVERSIONFW,SC2_Firmware_DESC} = ntuple(_ -> SC2_Firmware_DESC(), MAXVERSIONFW)
 end
 
-struct CameraType
-    Size::WORD
+@kwdef @zeros struct CameraType
+    Size::WORD = sizeof(CameraType)
     CamType::WORD
     CamSubType::WORD
     AlignDummy1::WORD
@@ -194,20 +164,15 @@ struct CameraType
     HWVersion::DWORD
     FWVersion::DWORD
     InterfaceType::WORD
-    HardwareVersion::HW_Vers
-    FirmwareVersion::FW_Vers
+    HardwareVersion::HW_Vers = HW_Vers()
+    FirmwareVersion::FW_Vers = FW_Vers()
     Dummy::NTuple{39,WORD}
-    function CameraType()
-        type_size = sizeof(CameraType)
-        new(type_size, 0, 0, 0, 0, 0, 0, 0, HW_Vers(), FW_Vers(),
-            Tuple(zeros(WORD,39)))
-    end
 end
 
-struct General
-    Size::WORD
+@kwdef @zeros struct General
+    Size::WORD = sizeof(General)
     AlignDummy1::WORD
-    CamType::CameraType
+    CamType::CameraType = CameraType()
     CamHealthWarnings::DWORD
     CamHealthErrors::DWORD
     CamHealthStatus::DWORD
@@ -215,26 +180,17 @@ struct General
     CamTemperature::SHORT
     PowerSupplyTemperature::SHORT
     Dummy::NTuple{37,WORD}
-    function General()
-        type_size = sizeof(General)
-        new(type_size, 0, CameraType(), 0, 0, 0, 0, 0, 0,
-            Tuple(zeros(WORD,37)))
-    end
 end
 
-struct Buflist
+@kwdef @zeros struct Buflist
     BufNr::SHORT
     AlignDummy::WORD
     StatusDll::DWORD
     StatusDrv::DWORD
-
-    function Buflist(bufnr)
-        new(bufnr, 0, 0, 0)
-    end
 end
 
-struct Metadata
-    Size::WORD
+@kwdef @zeros struct Metadata
+    Size::WORD = sizeof(Metadata)
     Version::WORD
     IMAGE_COUNTER_BCD::NTuple{4,BYTE}
     IMAGE_TIME_US_BCD::NTuple{3,BYTE}
@@ -265,32 +221,18 @@ struct Metadata
     CAMERA_SYNC_MODE::BYTE
     IMAGE_TYPE::BYTE
     COLOR_PATTERN::WORD
-
-    function Metadata()
-        type_size = sizeof(Metadata)
-        z = zeros(Cuchar,type_size)
-        reinterpret(WORD,@view(z[1:sizeof(WORD)]))[1] = type_size
-        h = reinterpret(Metadata, z)[1]
-        return h
-    end
 end
 
-struct CompressionParams
+@kwdef @zeros struct CompressionParams
     GainK::Cdouble
     DarkNoise_e::Cdouble
     DSNU_e::Cdouble
     PRNU_pct::Cdouble
     LightSourceNoise_pct::Cdouble
-
-    function CompressionParams()
-        type_size = sizeof(CompressionParams)
-        h = reinterpret(CompressionParams, zeros(Cuchar,type_size))[1]
-        return h
-    end
 end
 
-struct Timestamp
-    Size::WORD
+@kwdef @zeros struct Timestamp
+    Size::WORD = sizeof(Timestamp)
     ImgCounter::DWORD
     Year::WORD
     Month::WORD
@@ -299,13 +241,6 @@ struct Timestamp
     Minute::WORD
     Second::WORD
     MicroSeconds::WORD
-    function Timestamp()
-        type_size = sizeof(Timestamp)
-        z = zeros(Cuchar,type_size)
-        reinterpret(WORD,@view(z[1:sizeof(WORD)]))[1] = type_size
-        h = reinterpret(Timestamp, z)[1]
-        return h
-    end
 end
 
 end # module PcoStruct
