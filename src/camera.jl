@@ -18,7 +18,7 @@ end
     cam_handle::HANDLE = HANDLE(0)
     rec_handle::HANDLE = HANDLE(0)
     # camera configuration
-    roi::MVector{4, UInt16} = @MVector zeros(WORD,4)
+    roi::@NamedTuple{x_min::WORD,y_min::WORD,x_max::WORD,y_max::WORD}
     # logging
     timestamp::Bool = false
     memory_type::String = "memory"
@@ -54,7 +54,7 @@ function open(cam::PcoCamera)
     end
     PcoCameraIOStream(name = Wrapper.name(cam_handle),
                       cam_handle = cam_handle,
-                      roi = Wrapper.roi(cam_handle))
+                      roi = Wrapper.region_of_interest(cam_handle))
 end
 
 function close(cam::PcoCameraIOStream)
@@ -73,6 +73,16 @@ function isopen(cam::PcoCameraIOStream)
     cam.cam_handle == HANDLE(0) ? false : true
 end
 
+function region_of_interest(cam::PcoCameraIOStream)
+    return getfield(cam, :roi)
+end
+
+function region_of_interest!(cam::PcoCameraIOStream,x_min,x_max,y_min,y_max)
+    new_roi = NamedTuple{:x_min,:y_min,:x_max,:y_max}(x_min,x_max,y_min,y_max)
+    setfield!(cam, :roi, new_roi)
+    return cam
+end
+
 function trigger_mode(cam::PcoCameraIOStream)
     Wrapper.trigger_mode(cam.cam_handle)
 end
@@ -82,10 +92,11 @@ function trigger_mode!(cam::PcoCameraIOStream,mode_name)
 end
 
 function buffer_mode(cam::PcoCameraIOStream)
-    return cam.memory_type, cam.buffer_type
+    return cam.memory_type, cam.buffer_type, cam.number_of_images
 end
 
-function buffer_mode!(cam::PcoCameraIOStream, memory_type, buffer_type)
+function buffer_mode!(cam::PcoCameraIOStream, memory_type, buffer_type; number_of_images = cam.number_of_images)
+    @assert number_of_images > 0 "Number of images is at least one"
     if memory_type == "file"
         available_buffer_type = Wrapper.RECORDER_MODE_FILE
     elseif memory_type == "memory"
@@ -100,15 +111,6 @@ function buffer_mode!(cam::PcoCameraIOStream, memory_type, buffer_type)
     end
     cam.memory_type = memory_type
     cam.buffer_type = buffer_type
-    cam
-end
-
-function buffer_size(cam::PcoCameraIOStream)
-    return cam.number_of_images
-end
-
-function buffer_size!(cam::PcoCameraIOStream; number_of_images)
-    @assert number_of_images > 0 "Number of images is at least one"
     cam.number_of_images = number_of_images
     cam
 end

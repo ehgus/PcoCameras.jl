@@ -4,7 +4,6 @@ include("pco_struct.jl")
 
 using .PcoStruct
 using .TypeAlias
-using ..StaticArrays
 
 # ----------------------------------------------------------------------
 #    Initialization
@@ -77,6 +76,12 @@ function close(cam_handle::HANDLE)
     @rccheck SDK.CloseCamera(cam_handle)
 end
 
+function region_of_interest(cam_handle::HANDLE)
+    roi = zeros(WORD,(4,))
+    @rccheck SDK.GetROI(cam_handle, [view(roi, i) for i = 1:4]...)
+    return NamedTuple{(:x_min,:y_min,:x_max,:y_max)}(ntuple(i->roi[i],4))
+end
+
 function recording_state!(cam_handle::HANDLE,state)
     @rccheck SDK.SetRecordingState(cam_handle,state)
 end
@@ -145,13 +150,6 @@ function name(cam_handle::HANDLE)
     @rccheck SDK.GetCameraName(cam_handle, name, CAMERA_NAME_LEN)
     name[end] = 0
     unsafe_string(pointer(name))
-end
-
-
-function roi(cam_handle::HANDLE)
-    roi = @MVector zeros(WORD,4)
-    @rccheck SDK.GetROI(cam_handle, [view(roi, i) for i = 1:4]...)
-    return roi
 end
 
 function configuration(cam_handle::HANDLE)
@@ -253,20 +251,25 @@ function isactivated(rec_handle, cam_handle)
     return is_running[]
 end
 
-function copy_image(rec_handle, cam_handle, roi)
+function copy_image(rec_handle, cam_handle, roi::NamedTuple)
+    copy_image(rec_handle, cam_handle; roi...)
+end
+
+function copy_image(rec_handle, cam_handle; x_min, y_min, x_max, y_max)
     img_cnt_ptr = Ref(DWORD(0))
     while img_cnt_ptr[] == 0
         @rccheck Recorder.GetStatus(rec_handle,cam_handle, C_NULL, C_NULL, C_NULL, img_cnt_ptr, 
                     C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
     end
     img_cnt = img_cnt_ptr[]
-    w, h = roi[3:4] - roi[1:2] .+ 1
+    w = x_max - x_min + 1
+    h = y_max - y_min + 1
     image = zeros(WORD,(w,h,img_cnt))
     metadata = Ref(Metadata())
     timestamp = C_NULL
     for img_idx = 0:img_cnt-1
         img_num = Ref(DWORD(0))
-        @rccheck Recorder.CopyImage(rec_handle, cam_handle, img_idx, roi...,
+        @rccheck Recorder.CopyImage(rec_handle, cam_handle, img_idx, x_min, y_min, x_max, y_max,
                                     @view(image[w*h*img_idx+1]), img_num, metadata, timestamp)
     end
     return image
