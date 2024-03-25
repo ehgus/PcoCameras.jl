@@ -44,7 +44,7 @@ function open(cam::PcoCamera)
     try
         Wrapper.recording_state!(cam_handle,0)
         Wrapper.default!(cam_handle)
-        Wrapper.arm!(cam_handle)
+        Wrapper.arm(cam_handle)
     catch e
         if ~isa(e,Wrapper.CameraError)
             throw(e)
@@ -119,7 +119,7 @@ Start Recording
 function activate(cam::PcoCameraIOStream)
     # Reset previous recorder handler
     if Wrapper.health(cam.cam_handle)["status"] & 2 == 0
-        Wrapper.arm!(cam.cam_handle)
+        Wrapper.arm(cam.cam_handle)
     end
     deactivate(cam)
     Wrapper.delete(cam.rec_handle)

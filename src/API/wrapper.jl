@@ -53,6 +53,30 @@ function reset()
     @rccheck SDK.ResetLib()
 end
 
+const INTERFACE_DICT = Dict("FireWire" => 1,
+"GigE"=> 5,
+"USB 2.0"=> 6,
+"Camera Link Silicon Software"=> 7,
+"USB 3.0"=> 8,
+"CLHS"=> 11)
+
+function open()
+    cam_handle_ptr = Ref{HANDLE}(0)
+    @rccheck SDK.OpenCamera(cam_handle_ptr)
+    return cam_handle_ptr[]
+end
+
+function open(interface::String)
+    cam_handle_ptr = Ref{HANDLE}(0)
+    refoepnstruct = Ref(Openstruct(InterfaceType=INTERFACE_DICT[interface]))
+    @rccheck SDK.OpenCameraEx(cam_handle_ptr, refoepnstruct)
+    return cam_handle_ptr[]
+end
+
+function close(cam_handle::HANDLE)
+    @rccheck SDK.CloseCamera(cam_handle)
+end
+
 function recording_state!(cam_handle::HANDLE,state)
     @rccheck SDK.SetRecordingState(cam_handle,state)
 end
@@ -83,29 +107,9 @@ function delay_exposure!(cam_handle::HANDLE, delay, exposure)
     @rccheck SDK.SetDelayExposureTime(cam_handle, round(DWORD, delay), round(DWORD, exposure), 2, 2)
 end
 
-function arm!(cam_handle::HANDLE)
+function arm(cam_handle::HANDLE)
     @rccheck SDK.ArmCamera(cam_handle)
 end
-
-const INTERFACE_DICT = Dict("FireWire" => 1,
-"GigE"=> 5,
-"USB 2.0"=> 6,
-"Camera Link Silicon Software"=> 7,
-"USB 3.0"=> 8,
-"CLHS"=> 11)
-
-function open(interface::String)
-    cam_handle_ptr = Ref{HANDLE}(0)
-    refoepnstruct = Ref(Openstruct(InterfaceType=INTERFACE_DICT[interface]))
-    @rccheck SDK.OpenCameraEx(cam_handle_ptr, refoepnstruct)
-    return cam_handle_ptr[]
-end
-
-
-function close(cam_handle::HANDLE)
-    @rccheck SDK.CloseCamera(cam_handle)
-end
-
 
 function health(cam_handle::HANDLE)
     args = [Ref(DWORD(0)), Ref(DWORD(0)), Ref(DWORD(0))]

@@ -15,9 +15,9 @@ end
 #    CAMERA ACCESS
 # ----------------------------------------------------------------------
 
-function OpenCamera(ph, CamNum)
+function OpenCamera(ph)
     F = dlsym(SDK_DLL[], :PCO_OpenCamera)
-    ccall(F, Cuint, (Ptr{HANDLE}, WORD), ph, CamNum)
+    ccall(F, Cuint, (Ptr{HANDLE}, WORD), ph, WORD(0))
 end
 
 
