@@ -182,6 +182,31 @@ end
     Dummy::NTuple{37,WORD}
 end
 
+@kwdef @zeros struct Timing
+    Size::WORD = Size(Timing)
+    TimeBaseDelay::WORD
+    TimeBaseExposure::WORD
+    AlignDummy1::WORD
+    Dummy0::NTuple{2,DWORD}
+    DelayTable::NTuple{16,DWORD}
+    Dummy1::NTuple{114,DWORD}
+    ExposureTable::NTuple{16,DWORD}
+    Dummy2::NTuple{112,DWORD}
+    TriggerMode::WORD
+    ForceTrigger::WORD
+    PowerDownMode::WORD
+    PowerDownTime::DWORD
+    ExpTrgSignal::WORD
+    FPSExposureMode::WORD
+    FPSExposureTime::DWORD
+    ModulationMode::WORD
+    CameraSynchMode::WORD
+    PeriodicalTime::DWORD
+    TimeBasePeriodical::WORD
+    AlignDummy3::WORD
+    NumberOfExposures::DWORD
+end
+
 @kwdef @zeros struct Buflist
     BufNr::SHORT
     AlignDummy::WORD
