@@ -2,9 +2,23 @@ module PcoStruct
 
 using ..TypeAlias
 
-export Openstruct, Description, Description2, SC2_Hardware_DESC, 
- SC2_Firmware_DESC, HW_Vers, FW_Vers, CameraType, General, Buflist,
-  Metadata, CompressionParams, Timestamp
+export
+    # SDK-Access
+    Openstruct,
+    # SDK-Description
+    Description, Description2,
+    # SDK-Status
+    SC2_Hardware_DESC, SC2_Firmware_DESC, HW_Vers, FW_Vers, CameraType, General,
+    # SDK-Sensor
+    # SDK-Timing
+
+    # SDK-Recording
+    # SDK-Storage
+    # SDK-Image acquisition
+    Buflist, Metadata,
+    # SDK-Driver management
+    # Recorder
+    CompressionParams, Timestamp
 
 struct Openstruct
     Size::WORD
@@ -24,7 +38,6 @@ struct Openstruct
         new(type_size, InterfaceType, CameraNumber, 0, wOpenFlags, dwOpenFlags, OpenPtr, Tuple(zeros(WORD, 8)))
     end
 end
-
 
 struct Description
     Size::WORD
@@ -90,7 +103,6 @@ struct Description
     end
 end
 
-
 struct Description2
     Size::WORD
     AlignDummy1::WORD
@@ -122,7 +134,6 @@ struct Description2
     end
 end
 
-
 struct SC2_Hardware_DESC
     Name::NTuple{16,Cchar}
     BatchNo::WORD
@@ -139,7 +150,6 @@ struct SC2_Hardware_DESC
     end
 end
 
-
 struct SC2_Firmware_DESC
     Name::NTuple{16,Cchar}
     MinorRev::BYTE
@@ -155,7 +165,6 @@ struct SC2_Firmware_DESC
     end
 end
 
-
 const MAXVERSIONHW = 10
 struct HW_Vers
     BoardNum::WORD
@@ -166,7 +175,6 @@ struct HW_Vers
     end
 end
 
-
 const MAXVERSIONFW = 10
 struct FW_Vers
     DeviceNum::WORD
@@ -176,7 +184,6 @@ struct FW_Vers
         new(0, ntuple(i -> SC2_Firmware_DESC(), MAXVERSIONFW))
     end
 end
-
 
 struct CameraType
     Size::WORD
@@ -197,7 +204,6 @@ struct CameraType
     end
 end
 
-
 struct General
     Size::WORD
     AlignDummy1::WORD
@@ -215,7 +221,6 @@ struct General
             Tuple(zeros(WORD,37)))
     end
 end
-
 
 struct Buflist
     BufNr::SHORT
@@ -303,5 +308,4 @@ struct Timestamp
     end
 end
 
-
-end
+end # module PcoStruct
