@@ -10,9 +10,11 @@ export
     # SDK-Status
     SC2_Hardware_DESC, SC2_Firmware_DESC, HW_Vers, FW_Vers, CameraType, General,
     # SDK-Sensor
+    Sensor,
     # SDK-Timing
     Timing,
     # SDK-Recording
+    Recording,
     # SDK-Storage
     # SDK-Image acquisition
     Buflist, Metadata,
@@ -182,6 +184,43 @@ end
     Dummy::NTuple{37,WORD}
 end
 
+@kwdef @zeros struct Signal_Description
+    Size::WORD = sizeof(Signal_Description)
+    NumOfSignals::WORD
+    SingleSignalDesc::NTuple{20,Cchar}
+    Dummy::NTuple{524,DWORD}
+end
+
+@kwdef @zeros struct Sensor
+    Size::WORD = sizeof(Sensor)
+    AlignDummy1::WORD
+    Desc::Description = Description()
+    Desc2::Description2 = Description2()
+    Dummy2::NTuple{168,DWORD}
+    Sensorformat::WORD
+    RoiX0::WORD
+    RoiY0::WORD
+    RoiX1::WORD
+    RoiY1::WORD
+    BinHorz::WORD
+    BinVert::WORD
+    AlignDummy2::WORD
+    PixelRate::DWORD
+    ConvFact::WORD
+    DoubleImage::WORD
+    ADCOperation::WORD
+    IR::WORD
+    CoolSet::SHORT
+    OffsetRegulation::SHORT
+    NoiseFilterMODE::WORD
+    FastReadoutMODE::WORD
+    DSNUAdjustMODE::WORD
+    CDIMODE::WORD
+    Dummy3::NTuple{32,WORD}
+    SignalDesc::Signal_Description = Signal_Description()
+    Dummy::NTuple{7,DWORD}
+end
+
 @kwdef @zeros struct Timing
     Size::WORD = Size(Timing)
     TimeBaseDelay::WORD
@@ -205,6 +244,31 @@ end
     TimeBasePeriodical::WORD
     AlignDummy3::WORD
     NumberOfExposures::DWORD
+end
+
+@kwdef @zeros struct Recording
+    Size::WORD = Size(Recording)
+    StorageMode::WORD
+    RecSubmode::WORD
+    RecState::WORD
+    AcquMode::WORD
+    AcquEnableStatus::WORD
+    Day::BYTE
+    Month::BYTE
+    Year::WORD
+    Hour::WORD
+    Min::BYTE
+    Sec::BYTE
+    TimeStampMode::WORD
+    RecordStopEventMode::WORD
+    RecordStopDelayImages::DWORD
+    MetaDataMose::WORD
+    MetaDataSize::WORD
+    MetaDataVersion::WORD
+    Dummy1::WORD
+    AcquModeExNumberImages::DWORD
+    AcquModeExReserved::NTuple{4,DWORD}
+    Dummy::NTuple{22,WORD}
 end
 
 @kwdef @zeros struct Buflist
