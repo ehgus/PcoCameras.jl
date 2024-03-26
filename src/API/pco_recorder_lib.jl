@@ -24,13 +24,11 @@ function GetVersion(Major, Minor, Patch, Build)
      Major, Minor, Patch, Build)
 end
 
-
 function SaveImage(pImgBuf, Width, Height, FileType, IsBitmap, FilePth, Overwrite, metadata)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSaveImage)
     ccall(F, Cuint, (Ptr{Cvoid}, WORD, WORD, Ptr{Cchar}, bool, Ptr{Cchar}, bool,  Ptr{Metadata}),
      pImgBuf, Width, Height, FileType, IsBitmap, FilePth, Overwrite, metadata)
 end
-
 
 function SaveOverlay(pImgBufR, pImgBufG, pImgBufB, Width, Height, FileType, FilePth, Overwrite, metadata)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSaveOverlay)
@@ -38,12 +36,10 @@ function SaveOverlay(pImgBufR, pImgBufG, pImgBufB, Width, Height, FileType, File
      pImgBufR, pImgBufG, pImgBufB, Width, Height, FileType, FilePth, Overwrite, metadata)
 end
 
-
 function ResetLib(Silent)
     F = dlsym(Recorder_DLL[], :PCO_RecorderResetLib)
     ccall(F, Cuint, (bool,), Silent)
 end
-
 
 function Create(phRec, phCamArr, ImgDistributionArr, ArrLength, RecMode, DriveLetter, MaxImgCountArr)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCreate)
@@ -51,12 +47,10 @@ function Create(phRec, phCamArr, ImgDistributionArr, ArrLength, RecMode, DriveLe
      phRec, phCamArr, ImgDistributionArr, ArrLength, RecMode, DriveLetter, MaxImgCountArr)
 end
 
-
 function Delete(phRec)
     F = dlsym(Recorder_DLL[], :PCO_RecorderDelete)
     ccall(F, Cuint, (HANDLE,), phRec)
 end
-
 
 function Init(phRec, ImgCountArr, ArrLength, Type, NoOverwrite, FilePath, RamSegmentArr)
     F = dlsym(Recorder_DLL[], :PCO_RecorderInit)
@@ -64,12 +58,10 @@ function Init(phRec, ImgCountArr, ArrLength, Type, NoOverwrite, FilePath, RamSeg
      phRec, ImgCountArr, ArrLength, Type, NoOverwrite, FilePath, RamSegmentArr)
 end
 
-
 function Cleanup(phRec, phCam)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCleanup)
     ccall(F, Cuint, (HANDLE, HANDLE), phRec, phCam)
 end
-
 
 function GetSettings(phRec, phCam, Recmode, MaxImgCount, ReqImgCount, Width, Height, MetadataLines)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetSettings)
@@ -77,18 +69,15 @@ function GetSettings(phRec, phCam, Recmode, MaxImgCount, ReqImgCount, Width, Hei
      phRec, phCam, Recmode, MaxImgCount, ReqImgCount, Width, Height, MetadataLines)
 end
 
-
 function StartRecord(phRec, phCam)
     F = dlsym(Recorder_DLL[], :PCO_RecorderStartRecord)
     ccall(F, Cuint, (HANDLE, HANDLE), phRec, phCam)
 end
 
-
 function StopRecord(phRec, phCam)
     F = dlsym(Recorder_DLL[], :PCO_RecorderStopRecord)
     ccall(F, Cuint, (HANDLE, HANDLE), phRec, phCam)
 end
-
 
 function SetAutoExposure(phRec, phCam, AutoExpState, Smoothness, MinExposure, MaxExposure, ExpBase)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSetAutoExposure)
@@ -96,13 +85,11 @@ function SetAutoExposure(phRec, phCam, AutoExpState, Smoothness, MinExposure, Ma
      phRec, phCam, AutoExpState, Smoothness, MinExposure, MaxExposure, ExpBase)
 end
 
-
 function SetAutoExpRegions(phRec, phCam, RegionType, RoiX0Arr, RoiY0Arr, ArrLength)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSetAutoExpRegions)
     ccall(F, Cuint, (HANDLE, HANDLE, WORD, Ptr{WORD}, Ptr{WORD}, WORD),
      phRec, phCam, RegionType, RoiX0Arr, RoiY0Arr, ArrLength)
 end
-
 
 function SetCompressionParams(phRec, phCam, compressionParams)
     F = dlsym(Recorder_DLL[], :PCO_RecorderSetCompressionParams)
@@ -110,13 +97,11 @@ function SetCompressionParams(phRec, phCam, compressionParams)
      phRec, phCam, compressionParams)
 end
 
-
 function GetStatus(phRec, phCam, isactivated, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetStatus)
     ccall(F, Cuint, (HANDLE, HANDLE, Ptr{bool}, Ptr{bool}, Ptr{DWORD}, Ptr{DWORD}, Ptr{DWORD}, Ptr{bool}, Ptr{bool}, Ptr{DWORD}, Ptr{DWORD}),
      phRec, phCam, isactivated, AutoExpState, LastError, ProcImgCount, ReqImgCount, BuffersFull, FIFOOverflow, StartTime, StopTime)
 end
-
 
 function GetImageAddress(phRec, phCam, ImgIdx, ImgBuf, Width, Height, ImgNumber)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetImageAddress)
@@ -124,13 +109,11 @@ function GetImageAddress(phRec, phCam, ImgIdx, ImgBuf, Width, Height, ImgNumber)
      phRec, phCam, ImgIdx, ImgBuf, Width, Height, ImgNumber)
 end
 
-
 function CopyImage(phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCopyImage)
     ccall(F, Cuint, (HANDLE, HANDLE, DWORD, WORD, WORD, WORD, WORD, Ptr{WORD}, Ptr{DWORD}, Ptr{Metadata}, Ptr{Timestamp}),
      phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
 end
-
 
 function CopyAverageImage(phRec, phCam, StartIdx, StopIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCopyAverageImage)
@@ -138,12 +121,10 @@ function CopyAverageImage(phRec, phCam, StartIdx, StopIdx, RoixX0, RoixY0, RoixX
      phRec, phCam, StartIdx, StopIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf)
 end
 
-
 function CopyImageCompressed(phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
     F = dlsym(Recorder_DLL[], :PCO_RecorderCopyImageCompressed)
     ccall(F, Cuint, (HANDLE, HANDLE, DWORD, WORD, WORD, WORD, WORD, Ptr{BYTE}, Ptr{DWORD}, Ptr{Metadata}, Ptr{Timestamp}),
      phRec, phCam, ImgIdx, RoixX0, RoixY0, RoixX1, RoixY1, ImgBuf, ImgNumber, metadata, timestamp)
 end
 
-
-end
+end # module Recorder
