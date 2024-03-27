@@ -31,6 +31,9 @@ using PcoCameras
 # start camera
 cam = PcoCamera("GigE")
 acquired_image = open(cam) do io
+    @show trigger_mode(io)
+    @show timing_mode(io)
+    @show buffer_mode(io)
     trigger_mode!(io, "auto")
     buffer_mode!(io, "memory","fifo", number_of_images = 4)
     activate(io) do activated_io

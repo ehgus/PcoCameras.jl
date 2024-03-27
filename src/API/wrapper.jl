@@ -4,6 +4,7 @@ include("pco_struct.jl")
 
 using .PcoStruct
 using .TypeAlias
+using ..Unitful
 
 # ----------------------------------------------------------------------
 #    SDK wrapper
@@ -112,20 +113,82 @@ function default!(cam_handle::HANDLE)
     @rccheck SDK.SetBitAlignment(cam_handle,1)
 end
 
-"""
-Delay time (unit: ms)
-"""
-function delay_exposure(cam_handle::HANDLE)
-    delay = Ref(DWORD(0))
-    exposure = Ref(DWORD(0))
-    delay_base = Ref(WORD(0))
-    exposure_base = Ref(WORD(0))
-    @rccheck SDK.GetDelayExposureTime(cam_handle, delay, exposure, delay_base, exposure_base)
-    return delay[] * 10^(-6+3*delay_base[]), exposure[] * 10^(-6+3*exposure_base[])
+function timing_mode(cam_handle::HANDLE)
+    ref_timing_structure = Ref(Timing())
+    @rccheck SDK.GetTimingStruct(cam_handle, ref_timing_structure)
+    timing_structure = ref_timing_structure[]
+    if timing_structure.TimingControlMode == WORD(0)
+        # exposure / delay
+        if timing_structure.TimeBaseDelay == WORD(0)
+            delay_unit = u"ns"
+        elseif timing_structure.TimeBaseDelay == WORD(1)
+            delay_unit = u"μs"
+        else
+            delay_unit = u"ms"
+        end
+        if timing_structure.TimeBaseExposure == WORD(0)
+            exposure_unit = u"ns"
+        elseif timing_structure.TimeBaseExposure == WORD(1)
+            exposure_unit = u"μs"
+        else
+            exposure_unit = u"ms"
+        end
+        exposure_table = Int.(timing_structure.ExposureTable)
+        delay_table = Int.(timing_structure.DelayTable)
+        is_valid_index = .!(exposure_table .== delay_table .== 0)
+        idx = findlast(is_valid_index)
+        if idx == 1
+            (
+                exposure = exposure_table[1].*exposure_unit,
+                delay = delay_table[1].*delay_unit
+            )
+        else
+            (
+                exposure = exposure_table[1:idx].*delay_unit,
+                delay = delay_table[1:idx].*delay_unit
+            )
+        end
+    else
+        # fps
+        (
+            exposure = timing_structure.FrameRateExposure.*u"ns",
+            fps = timing_structure.FrameRate.*u"mHz"
+        )
+    end
 end
 
-function delay_exposure!(cam_handle::HANDLE, delay, exposure)
-    @rccheck SDK.SetDelayExposureTime(cam_handle, round(DWORD, delay), round(DWORD, exposure), 2, 2)
+const TIME_QUANTITY = Quantity{<:Number,Unitful.Dimensions{(Unitful.Dimension{:Time}(1//1),)}}
+const FREQ_QUANTITY = Quantity{<:Number,Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}}
+function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, delay::TIME_QUANTITY)
+    if unit(exposure) == u"ns"
+        exposure_unit = WORD(0)
+        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ns"))
+    elseif unit(exposure) == u"μs"
+        exposure_unit = WORD(1)
+        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"μs"))
+    else
+        exposure_unit = WORD(2)
+        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ms"))
+    end
+    if unit(delay) == u"ns"
+        delay_unit = WORD(0)
+        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"ns"))
+    elseif unit(delay) == u"μs"
+        delay_unit = WORD(1)
+        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"μs"))
+    else
+        delay_unit = WORD(2)
+        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"ms"))
+    end
+    @rccheck SDK.SetDelayExposureTime(cam_handle, delay_val, exposure_val, delay_unit, exposure_unit)
+end
+
+function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, fps::FREQ_QUANTITY)
+    frame_rate_status = Ref(WORD(0))
+    frame_rate_mode = WORD(3)
+    exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ns"))
+    fps_val = round(DWORD,uconvert(NoUnits, fps/1u"mHz"))
+    @rccheck SDK.SetFrameRate(cam_handle, frame_rate_status, frame_rate_mode, fps_val, exposure_val)
 end
 
 function arm(cam_handle::HANDLE)
@@ -133,7 +196,6 @@ function arm(cam_handle::HANDLE)
 end
 
 # activation & I/O operation
-
 
 const REC_MODE_DICT = Dict("file"=>1, "memory"=>2, "camram"=>3)
 

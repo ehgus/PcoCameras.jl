@@ -92,11 +92,12 @@ function trigger_mode!(cam::PcoCameraIOStream,mode_name)
 end
 
 function timing_mode(cam::PcoCameraIOStream)
-    error("Not implemented")
+    Wrapper.timing_mode(cam.cam_handle)
 end
 
-function timing_mode!(cam::PcoCameraIOStream,args...;kwargs...)
-    error("Not implemented")
+function timing_mode!(cam::PcoCameraIOStream; exposure::Wrapper.TIME_QUANTITY,delay::Union{Wrapper.TIME_QUANTITY, Nothing}=nothing,fps::Union{Wrapper.TIME_QUANTITY, Nothing}=nothing)
+    @assert xor(isnothing(delay),isnothing(fps))  "Either `delay` only or `fps` only should be specified"
+    Wrapper.timing_mode!(cam.cam_handle,exposure, somthing(delay,fps))
 end
 
 function buffer_mode(cam::PcoCameraIOStream)

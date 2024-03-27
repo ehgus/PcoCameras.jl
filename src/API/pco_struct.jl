@@ -30,13 +30,13 @@ macro zeros(expr)
         ei = blk.args[i]
         if ei isa Expr && ei.head === :(::)
             defexpr = ei.args[2]
-            zero_val = :(ntuple(_->UInt8(0),sizeof($defexpr)))
+            zero_val = Expr(:call, :ntuple, Expr(:->,:_,:(UInt8(0))),Expr(:call,:sizeof,defexpr))
             init_val = Expr(:call, :reinterpret, defexpr, zero_val)
             blk.args[i] = Expr(:(=),ei, init_val)
         end
     end
     expr.args[3] = blk
-    return expr
+    return esc(expr)
 end
 
 @kwdef @zeros struct Openstruct
@@ -221,8 +221,22 @@ end
     Dummy::NTuple{7,DWORD}
 end
 
+@kwdef @zeros struct Signal
+    Size::WORD = sizeof(Signal)
+    SignalNum::WORD
+    Enabled::WORD
+    Type::WORD
+    Polarity::WORD
+    Filter::WORD
+    Selected::WORD
+    Reserved1::WORD
+    Parameter::NTuple{4,DWORD}
+    SignalFunctionality::NTuple{4,DWORD}
+    Reserved2::NTuple{3,DWORD}
+end
+
 @kwdef @zeros struct Timing
-    Size::WORD = Size(Timing)
+    Size::WORD = sizeof(Timing)
     TimeBaseDelay::WORD
     TimeBaseExposure::WORD
     AlignDummy1::WORD
@@ -244,6 +258,15 @@ end
     TimeBasePeriodical::WORD
     AlignDummy3::WORD
     NumberOfExposures::DWORD
+    MonitorOffset::LONG
+    Signal::NTuple{20,Signal} = ntuple(_->Signal(),20)
+    StatusFrameRate::WORD
+    FrameRateMode::WORD
+    FrameRate::DWORD
+    FrameRateExposure::DWORD
+    TimingControlMode::WORD
+    FastTimingMode::WORD
+    Dummy::NTuple{24,WORD}
 end
 
 @kwdef @zeros struct Recording

@@ -4,6 +4,7 @@ using Reexport
 using VariableIOs
 using VariableIOs.VariableArrayIOs
 using Dates
+using Unitful
 
 @reexport import VariableIOs:
     activate,
