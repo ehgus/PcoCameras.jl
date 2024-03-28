@@ -15,8 +15,8 @@ end
 @kwdef mutable struct PcoCameraIOStream <: VariableArrayIOStream
     name::String = ""
     # handler
-    cam_handle::HANDLE = HANDLE(0)
-    rec_handle::HANDLE = HANDLE(0)
+    cam_handle::HANDLE = C_NULL
+    rec_handle::HANDLE = C_NULL
     # camera configuration
     roi::@NamedTuple{x_min::WORD,y_min::WORD,x_max::WORD,y_max::WORD}
     # logging
@@ -63,14 +63,14 @@ function close(cam::PcoCameraIOStream)
     end
     deactivate(cam)
     Wrapper.delete(cam.rec_handle)
-    cam.rec_handle = HANDLE(0)
+    cam.rec_handle = C_NULL
     Wrapper.close(cam.cam_handle)
-    cam.cam_handle = HANDLE(0)
+    cam.cam_handle = C_NULL
     return
 end
 
 function isopen(cam::PcoCameraIOStream) 
-    cam.cam_handle == HANDLE(0) ? false : true
+    cam.cam_handle == C_NULL ? false : true
 end
 
 function region_of_interest(cam::PcoCameraIOStream)
@@ -89,15 +89,16 @@ end
 
 function trigger_mode!(cam::PcoCameraIOStream,mode_name)
     Wrapper.trigger_mode!(cam.cam_handle,mode_name)
+    Wrapper.arm(cam.cam_handle)
 end
 
 function timing_mode(cam::PcoCameraIOStream)
     Wrapper.timing_mode(cam.cam_handle)
 end
 
-function timing_mode!(cam::PcoCameraIOStream; exposure::Wrapper.TIME_QUANTITY,delay::Union{Wrapper.TIME_QUANTITY, Nothing}=nothing,fps::Union{Wrapper.TIME_QUANTITY, Nothing}=nothing)
+function timing_mode!(cam::PcoCameraIOStream; exposure::Wrapper.TIME_QUANTITY,delay::Union{Wrapper.TIME_QUANTITY, Nothing}=nothing,fps::Union{Wrapper.FREQ_QUANTITY, Nothing}=nothing)
     @assert xor(isnothing(delay),isnothing(fps))  "Either `delay` only or `fps` only should be specified"
-    Wrapper.timing_mode!(cam.cam_handle,exposure, somthing(delay,fps))
+    Wrapper.timing_mode!(cam.cam_handle,exposure, something(delay,fps))
 end
 
 function buffer_mode(cam::PcoCameraIOStream)
@@ -115,7 +116,7 @@ function buffer_mode!(cam::PcoCameraIOStream, memory_type, buffer_type; number_o
     else
         error("Available memory types are \"file\", \"memory\", and \"camram\".")
     end
-    if !haskey(available_buffer_type, buffer_type)
+    if buffer_type ∉ available_buffer_type
         error("Available memroy types for $(memory_type) are $(keys(available_buffer_type))")
     end
     cam.memory_type = memory_type
@@ -137,7 +138,7 @@ function activate(cam::PcoCameraIOStream)
     # create handler
     cam.rec_handle, max_img_count = Wrapper.create(cam.cam_handle, cam.memory_type)
     @assert cam.number_of_images <= max_img_count "Maximum available images: $(max_img_count)"
-    Wrapper.init(cam.rec_handle,cam.number_of_images,cam.buffer_type)
+    Wrapper.init(cam.rec_handle, cam.number_of_images, cam.memory_type, cam.buffer_type)
     Wrapper.start_record(cam.rec_handle)
 end
 
@@ -145,7 +146,7 @@ function deactivate(cam::PcoCameraIOStream)
     Wrapper.stop_record(cam.rec_handle, cam.cam_handle)
 end
 
-isactivated(cam::PcoCameraIOStream) = Wrapper.isactivated(cam.rec_handle, cam.cam_handle) == 1
+isactivated(cam::PcoCameraIOStream) = cam.rec_handle != C_NULL && Wrapper.isactivated(cam.rec_handle, cam.cam_handle) == 1
 
 function trigger(cam::PcoCameraIOStream)
     Wrapper.trigger(cam.cam_handle)

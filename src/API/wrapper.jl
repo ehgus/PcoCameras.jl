@@ -28,14 +28,14 @@ end
 
 macro rccheck(apicall)
     str_apicall = "Pco." * sprint(Base.show_unquoted, apicall)
-    return esc(quote
-        rc = $apicall
+    return quote
+        rc = $(esc(apicall))
         if rc != 0
             func = $str_apicall
             txt = errortext(rc)
             throw(CameraError("$(func) : $(txt)"))
         end
-    end)
+    end
 end
 
 """
@@ -157,8 +157,8 @@ function timing_mode(cam_handle::HANDLE)
     end
 end
 
-const TIME_QUANTITY = Quantity{<:Number,Unitful.Dimensions{(Unitful.Dimension{:Time}(1//1),)}}
-const FREQ_QUANTITY = Quantity{<:Number,Unitful.Dimensions{(Unitful.Dimension{:Time}(-1//1),)}}
+const TIME_QUANTITY = Quantity{<:Number,Unitful.𝐓}
+const FREQ_QUANTITY = Quantity{<:Number,Unitful.𝐓^-1}
 function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, delay::TIME_QUANTITY)
     if unit(exposure) == u"ns"
         exposure_unit = WORD(0)
@@ -184,11 +184,23 @@ function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, delay::TIME_Q
 end
 
 function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, fps::FREQ_QUANTITY)
-    frame_rate_status = Ref(WORD(0))
+    ref_frame_rate_status = Ref(WORD(0))
     frame_rate_mode = WORD(3)
-    exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ns"))
-    fps_val = round(DWORD,uconvert(NoUnits, fps/1u"mHz"))
-    @rccheck SDK.SetFrameRate(cam_handle, frame_rate_status, frame_rate_mode, fps_val, exposure_val)
+    exposure_val = Ref(round(DWORD,uconvert(NoUnits, exposure/1u"ns")))
+    fps_val = Ref(round(DWORD,uconvert(NoUnits, fps/1u"mHz")))
+    @rccheck SDK.SetFrameRate(cam_handle, ref_frame_rate_status, frame_rate_mode, fps_val, exposure_val)
+    frame_rate_status = ref_frame_rate_status[]
+    @show frame_rate_status
+    if frame_rate_mode == 0
+    elseif frame_rate_status == 1
+        @warn "Imaging will be limited by readout time"
+    elseif frame_rate_status == 2
+        @warn "Imaging will be limited by exposure time"
+    elseif frame_rate_status == 4
+        @warn "Exposure time is trimmed"
+    elseif frame_rate_status == 0x8000
+        @warn "Fail to set the fps timing"
+    end
 end
 
 function arm(cam_handle::HANDLE)
@@ -200,7 +212,7 @@ end
 const REC_MODE_DICT = Dict("file"=>1, "memory"=>2, "camram"=>3)
 
 function create(cam_handle, mode = "memory",drive_letter='C')
-    rec_handle_ptr = Ref(HANDLE(0))
+    rec_handle_ptr = Ref(C_NULL)
     cam_handle_arr = [cam_handle]
     cam_count = length(cam_handle_arr)
     img_distribution_arr = ones(DWORD, cam_count)
@@ -213,22 +225,27 @@ function create(cam_handle, mode = "memory",drive_letter='C')
 end
 
 function delete(rec_handle)
-    if rec_handle != HANDLE(0)
+    if rec_handle != C_NULL
         @rccheck Recorder.Delete(rec_handle)
     end
 end
 
-const RECORDER_MODE_FILE = Dict("tif"=>1, "multi_tif"=>2, "pco_raw"=>3,"b16"=>4, "dicom"=>5, "multi_dicom"=>6)
-const RECORDER_MODE_MEMORY = Dict("sequence"=>1, "ring buffer"=>2, "fifo"=>3)
-const RECORDER_MODE_CAMRAM = Dict("sequential"=>1,"single_image"=>2)
+const RECORDER_MODE_FILE = ["tif", "multi_tif", "pco_raw","b16", "dicom", "multi_dicom"]
+const RECORDER_MODE_MEMORY = ["sequence", "ring buffer", "fifo"]
+const RECORDER_MODE_CAMRAM = ["sequential","single_image"]
 
-function init(rec_handle,img_count,mode="sequence")
+function init(rec_handle,img_count,memory_type,buffer_type, overwrite = false)
     cam_count = 1
-    if mode == "ring buffer" || mode == "fifo"
-        @assert img_count >= 4 "Please use 4 or more image buffer on that mode"
+    if buffer_type == "ring buffer" || buffer_type == "fifo"
+        @assert img_count >= 4 "Please use 4 or more image buffer on that buffer type"
     end
-    type = RECORDER_MODE_MEMORY[mode]
-    overwrite = false
+    if memory_type == "file"
+        type = findfirst(isequal(buffer_type), RECORDER_MODE_FILE)
+    elseif memory_type == "memory"
+        type = findfirst(isequal(buffer_type), RECORDER_MODE_MEMORY)
+    else
+        type = findfirst(isequal(buffer_type), RECORDER_MODE_CAMRAM)
+    end
     filepath = C_NULL
     ram_segment_arr = C_NULL
     @rccheck Recorder.Init(rec_handle, Ref(DWORD(img_count)), cam_count, 
@@ -242,7 +259,7 @@ end
 
 
 function stop_record(rec_handle, cam_handle)
-    if rec_handle != HANDLE(0)
+    if rec_handle != C_NULL
         @rccheck Recorder.StopRecord(rec_handle, cam_handle)
     end
 end

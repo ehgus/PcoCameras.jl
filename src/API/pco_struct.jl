@@ -247,6 +247,7 @@ end
     Dummy2::NTuple{112,DWORD}
     TriggerMode::WORD
     ForceTrigger::WORD
+    CameraBusyStatus::WORD
     PowerDownMode::WORD
     PowerDownTime::DWORD
     ExpTrgSignal::WORD

@@ -24,9 +24,9 @@ julia> ]add https://github.com/ehgus/VariableIOs.jl https://github.com/ehgus/Pco
 
 ```Julia
 using PcoCameras
+using Unitful
 
-# If you want to reset the connection, execute the following command
-# PcoCameras.reset()
+# PcoCameras.reset() # to reset the camera connection
 
 # start camera
 cam = PcoCamera("GigE")
@@ -34,9 +34,14 @@ acquired_image = open(cam) do io
     @show trigger_mode(io)
     @show timing_mode(io)
     @show buffer_mode(io)
-    trigger_mode!(io, "auto")
+    trigger_mode!(io, "SW")
+    timing_mode!(io, exposure = 100u"μs", delay = 0u"μs")
     buffer_mode!(io, "memory","fifo", number_of_images = 4)
+    @show trigger_mode(io)
+    @show timing_mode(io)
+    @show buffer_mode(io)
     activate(io) do activated_io
+        trigger(activated_io)
         read(activated_io)
     end
 end

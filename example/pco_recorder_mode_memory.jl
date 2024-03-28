@@ -26,9 +26,9 @@ CAMCOUNT = 1
 ####################
 ##Main
 ####################
-hRec = Ref(HANDLE(0))
+hRec = Ref(C_NULL)
 
-hCamArr = [HANDLE(0) for _ in 1:CAMCOUNT]
+hCamArr = [C_NULL for _ in 1:CAMCOUNT]
 imgDistributionArr = zeros(DWORD, CAMCOUNT);
 maxImgCountArr = zeros(DWORD, CAMCOUNT);
 reqImgCountArr = zeros(DWORD, CAMCOUNT);
