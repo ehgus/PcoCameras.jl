@@ -17,15 +17,15 @@ struct CameraError <: Exception
 end
 
 function errortext(rc)
-    len = 200
+    len = DWORD(200)
     txt = Vector{Cchar}(undef, len)
-    SDK.GetErrorTextSDK(rc, txt, len)
+    GetErrorTextSDK(rc, txt, len)
     txt[end] = 0
     unsafe_string(pointer(txt))
 end
 
 macro rccheck(expr)
-    (Meta.isexpr(expr,:ccall) && expr.args[1] === :ccall) || "invalid use of @rccheck"
+    (Meta.isexpr(expr,:ccall) && expr.args[1] === :ccall && expr.args[3] === :Cuint) || "invalid use of @rccheck"
     return quote
         rc = $(esc(expr))
         if rc != 0
@@ -555,8 +555,7 @@ end
 
 function GetErrorTextSDK(Error::DWORD, error_string, error_string_length)
     F = dlsym(SDK_DLL[], :PCO_GetErrorTextSDK)
-    @rccheck ccall(F, Cvoid, (DWORD, Ptr{Cchar}, DWORD),
-          Error, error_string, error_string_length)
+    ccall(F, Cvoid, (DWORD, Ptr{Cchar}, DWORD), Error, error_string, error_string_length)
 end
 
 end # module SDK

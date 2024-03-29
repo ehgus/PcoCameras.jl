@@ -1,12 +1,13 @@
+using .Wrapper
 using .Wrapper.TypeAlias
-using .Wrapper: INTERFACE_DICT, reset
+using .Wrapper: PcoStruct, SDK, Recorder
 
 struct PcoCamera <: IODeviceName
     interface::String
     function PcoCamera(interface)
         # check interface
-        if !haskey(INTERFACE_DICT, interface)
-            error("Available interfaces are $(join(keys(INTERFACE_DICT), ", "))")
+        if !haskey(Wrapper.INTERFACE_DICT, interface)
+            error("Available interfaces are $(join(keys(Wrapper.INTERFACE_DICT), ", "))")
         end
         new(interface)
     end
@@ -96,9 +97,84 @@ function timing_mode(cam::PcoCameraIOStream)
     Wrapper.timing_mode(cam.cam_handle)
 end
 
-function timing_mode!(cam::PcoCameraIOStream; exposure::Wrapper.TIME_QUANTITY,delay::Union{Wrapper.TIME_QUANTITY, Nothing}=nothing,fps::Union{Wrapper.FREQ_QUANTITY, Nothing}=nothing)
-    @assert xor(isnothing(delay),isnothing(fps))  "Either `delay` only or `fps` only should be specified"
-    Wrapper.timing_mode!(cam.cam_handle,exposure, something(delay,fps))
+const TIME_QUANTITY = Quantity{<:Number,Unitful.𝐓}
+const FREQ_QUANTITY = Quantity{<:Number,Unitful.𝐓^-1}
+
+function timing_mode!(cam::PcoCameraIOStream; exposure, delay=nothing, fps=nothing)
+    @assert xor(isnothing(delay), isnothing(fps)) "Either `delay` or `fps` should be defined"
+    timing_mode!(cam, something(delay, fps), exposure)
+end
+
+function timing_mode!(cam::PcoCameraIOStream, delay::TIME_QUANTITY, exposure::TIME_QUANTITY)
+    if unit(delay) == u"ns"
+        delay_unit = WORD(0)
+        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"ns"))
+    elseif unit(delay) == u"μs"
+        delay_unit = WORD(1)
+        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"μs"))
+    else
+        delay_unit = WORD(2)
+        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"ms"))
+    end
+    if unit(exposure) == u"ns"
+        exposure_unit = WORD(0)
+        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ns"))
+    elseif unit(exposure) == u"μs"
+        exposure_unit = WORD(1)
+        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"μs"))
+    else
+        exposure_unit = WORD(2)
+        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ms"))
+    end
+    SDK.SetDelayExposureTime(cam.cam_handle, delay_val, exposure_val, delay_unit, exposure_unit)
+end
+
+function timing_mode!(cam::PcoCameraIOStream, delay::Vector{<:TIME_QUANTITY}, exposure::Vector{<:TIME_QUANTITY})
+    MAX_LENGTH = WORD(16)
+    count = max(length(delay), length(exposure))
+    @assert count ≤ MAX_LENGTH "Maximum length of time table should be less than $(MAX_LENGTH)"
+    delay_val = zeros(WORD, MAX_LENGTH)
+    exposure_val = zeros(WORD, MAX_LENGTH)
+    if unit(eltype(delay)) == u"ns"
+        delay_unit = WORD(0)
+        delay_val[1:length(delay)] .= round.(DWORD,uconvert.(NoUnits, delay./1u"ns"))
+    elseif unit(eltype(delay)) == u"μs"
+        delay_unit = WORD(1)
+        delay_val[1:length(delay)] .= round.(DWORD,uconvert.(NoUnits, delay./1u"μs"))
+    else
+        delay_unit = WORD(2)
+        delay_val[1:length(delay)] .= round.(DWORD,uconvert.(NoUnits, delay./1u"ms"))
+    end
+    if unit(eltype(exposure)) == u"ns"
+        exposure_unit = WORD(0)
+        exposure_val[1:length(exposure)] .= round.(DWORD,uconvert.(NoUnits, exposure./1u"ns"))
+    elseif unit(eltype(exposure)) == u"μs"
+        exposure_unit = WORD(1)
+        exposure_val[1:length(exposure)] .= round.(DWORD,uconvert.(NoUnits, exposure./1u"μs"))
+    else
+        exposure_unit = WORD(2)
+        exposure_val[1:length(exposure)] .= round.(DWORD,uconvert.(NoUnits, exposure./1u"ms"))
+    end
+    SDK.SetDelayExposureTimeTable(cam.cam_handle, delay_val, exposure_val, delay_unit, exposure_unit, count)
+end
+
+function timing_mode!(cam::PcoCameraIOStream, fps::FREQ_QUANTITY, exposure::TIME_QUANTITY)
+    frame_rate_mode = WORD(3)
+    ref_frame_rate_status = Ref(WORD(0))
+    exposure_val = Ref(round(DWORD,uconvert(NoUnits, exposure/1u"ns")))
+    fps_val = Ref(round(DWORD,uconvert(NoUnits, fps/1u"mHz")))
+    SDK.SetFrameRate(cam.cam_handle, ref_frame_rate_status, frame_rate_mode, fps_val, exposure_val)
+    frame_rate_status = ref_frame_rate_status[]
+    if frame_rate_mode == 0
+    elseif frame_rate_status == 1
+        @warn "Imaging will be limited by readout time"
+    elseif frame_rate_status == 2
+        @warn "Imaging will be limited by exposure time"
+    elseif frame_rate_status == 4
+        @warn "Exposure time is trimmed"
+    elseif frame_rate_status == 0x8000
+        @warn "Fail to set the fps timing"
+    end
 end
 
 function buffer_mode(cam::PcoCameraIOStream)

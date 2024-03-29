@@ -5,7 +5,7 @@ include("pco_struct.jl")
 using .PcoStruct
 using .TypeAlias
 using ..Unitful
-
+export reset
 # ----------------------------------------------------------------------
 #    SDK wrapper
 # ----------------------------------------------------------------------
@@ -131,52 +131,6 @@ function timing_mode(cam_handle::HANDLE)
             exposure = timing_structure.FrameRateExposure.*u"ns",
             fps = timing_structure.FrameRate.*u"mHz"
         )
-    end
-end
-
-const TIME_QUANTITY = Quantity{<:Number,Unitful.𝐓}
-const FREQ_QUANTITY = Quantity{<:Number,Unitful.𝐓^-1}
-function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, delay::TIME_QUANTITY)
-    if unit(exposure) == u"ns"
-        exposure_unit = WORD(0)
-        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ns"))
-    elseif unit(exposure) == u"μs"
-        exposure_unit = WORD(1)
-        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"μs"))
-    else
-        exposure_unit = WORD(2)
-        exposure_val = round(DWORD,uconvert(NoUnits, exposure/1u"ms"))
-    end
-    if unit(delay) == u"ns"
-        delay_unit = WORD(0)
-        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"ns"))
-    elseif unit(delay) == u"μs"
-        delay_unit = WORD(1)
-        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"μs"))
-    else
-        delay_unit = WORD(2)
-        delay_val = round(DWORD,uconvert(NoUnits, delay/1u"ms"))
-    end
-    SDK.SetDelayExposureTime(cam_handle, delay_val, exposure_val, delay_unit, exposure_unit)
-end
-
-function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, fps::FREQ_QUANTITY)
-    ref_frame_rate_status = Ref(WORD(0))
-    frame_rate_mode = WORD(3)
-    exposure_val = Ref(round(DWORD,uconvert(NoUnits, exposure/1u"ns")))
-    fps_val = Ref(round(DWORD,uconvert(NoUnits, fps/1u"mHz")))
-    SDK.SetFrameRate(cam_handle, ref_frame_rate_status, frame_rate_mode, fps_val, exposure_val)
-    frame_rate_status = ref_frame_rate_status[]
-    @show frame_rate_status
-    if frame_rate_mode == 0
-    elseif frame_rate_status == 1
-        @warn "Imaging will be limited by readout time"
-    elseif frame_rate_status == 2
-        @warn "Imaging will be limited by exposure time"
-    elseif frame_rate_status == 4
-        @warn "Exposure time is trimmed"
-    elseif frame_rate_status == 0x8000
-        @warn "Fail to set the fps timing"
     end
 end
 

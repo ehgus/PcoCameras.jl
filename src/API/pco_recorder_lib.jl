@@ -10,6 +10,7 @@ dir_path = "C:/Program Files/PCO Digital Camera Toolbox/pco.recorder/bin64"
 const Recorder_DLL = Ref{Ptr{Cvoid}}(0)
 function __init__()
     Recorder_DLL[] = dlopen(joinpath(dir_path,"PCO_Recorder.dll"))
+    ResetLib(false)
     finalizer((x->dlclose(x[])),Recorder_DLL)
 end
 
@@ -19,7 +20,7 @@ end
 
 function GetVersion(Major, Minor, Patch, Build)
     F = dlsym(Recorder_DLL[], :PCO_RecorderGetVersion)
-    @rccheck ccall(F, Cvoid, (Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+    ccall(F, Cvoid, (Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
      Major, Minor, Patch, Build)
 end
 
