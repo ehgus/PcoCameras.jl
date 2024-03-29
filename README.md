@@ -34,14 +34,14 @@ acquired_image = open(cam) do io
     @show trigger_mode(io)
     @show timing_mode(io)
     @show buffer_mode(io)
-    trigger_mode!(io, "SW")
+    trigger_mode!(io, "auto")
     timing_mode!(io, exposure = 100u"μs", delay = 0u"μs")
-    buffer_mode!(io, "memory","fifo", number_of_images = 4)
+    buffer_mode!(io, "memory","sequence", number_of_images = 4)
     @show trigger_mode(io)
     @show timing_mode(io)
     @show buffer_mode(io)
     activate(io) do activated_io
-        trigger(activated_io)
+        sleep(1)
         read(activated_io)
     end
 end
