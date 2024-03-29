@@ -29,7 +29,7 @@ using Unitful
 # PcoCameras.reset() # to reset the camera connection
 
 # start camera
-cam = PcoCamera("GigE")
+cam = PcoCamera(:GigE)
 acquired_image = open(cam) do io
     @show trigger_mode(io)
     @show timing_mode(io)

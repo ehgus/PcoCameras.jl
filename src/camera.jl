@@ -1,16 +1,14 @@
 using .Wrapper
 using .Wrapper.TypeAlias
+using .Wrapper.PcoEnum
 using .Wrapper: PcoStruct, SDK, Recorder
 
-struct PcoCamera <: IODeviceName
-    interface::String
-    function PcoCamera(interface)
-        # check interface
-        if !haskey(Wrapper.INTERFACE_DICT, interface)
-            error("Available interfaces are $(join(keys(Wrapper.INTERFACE_DICT), ", "))")
-        end
-        new(interface)
-    end
+@kwdef struct PcoCamera <: IODeviceName
+    interface::InterfaceType.T = InterfaceType.Any
+end
+
+function PcoCamera(interface::Symbol)
+    PcoCamera(eval(:(InterfaceType.$interface)))
 end
 
 @kwdef mutable struct PcoCameraIOStream <: VariableArrayIOStream
@@ -33,7 +31,10 @@ end
 
 function open(cam::PcoCamera)
     cam_handle = try
-        Wrapper.open(cam.interface)
+        ref_cam_handle = Ref(C_NULL)
+        ref_openstruct = Ref(PcoStruct.Openstruct(InterfaceType=WORD(cam.interface)))
+        SDK.OpenCameraEx(ref_cam_handle, ref_openstruct)
+        ref_cam_handle[]
     catch e
         if ~isa(e, Wrapper.CameraError)
             throw(e)
@@ -50,7 +51,7 @@ function open(cam::PcoCamera)
         if ~isa(e,Wrapper.CameraError)
             throw(e)
         end
-        Wrapper.close(cam_handle)
+        SDK.CloseCamera(can.cam_handle)
         error("The camera initialization has been failed\n--> $(e.msg)")
     end
     PcoCameraIOStream(name = Wrapper.name(cam_handle),
@@ -65,7 +66,7 @@ function close(cam::PcoCameraIOStream)
     deactivate(cam)
     Wrapper.delete(cam.rec_handle)
     cam.rec_handle = C_NULL
-    Wrapper.close(cam.cam_handle)
+    SDK.CloseCamera(cam.cam_handle)
     cam.cam_handle = C_NULL
     return
 end
