@@ -13,36 +13,13 @@ using ..Unitful
 include("pco_sc2_cam_lib.jl")
 include("pco_recorder_lib.jl")
 
-struct CameraError <: Exception
-    msg::String
-end
 
-function errortext(rc)
-    len = 200
-    txt = Vector{Cchar}(undef, len)
-    SDK.GetErrorTextSDK(rc, txt, len)
-    txt[end] = 0
-    unsafe_string(pointer(txt))
-end
-
-
-macro rccheck(apicall)
-    str_apicall = "Pco." * sprint(Base.show_unquoted, apicall)
-    return quote
-        rc = $(esc(apicall))
-        if rc != 0
-            func = $str_apicall
-            txt = errortext(rc)
-            throw(CameraError("$(func) : $(txt)"))
-        end
-    end
-end
 
 """
 Reset driver that close all opened cameras
 """
 function reset()
-    @rccheck SDK.ResetLib()
+    SDK.ResetLib()
 end
 
 const INTERFACE_DICT = Dict("FireWire" => 1,
@@ -56,19 +33,19 @@ const INTERFACE_DICT = Dict("FireWire" => 1,
 
 function open()
     cam_handle_ptr = Ref{HANDLE}(0)
-    @rccheck SDK.OpenCamera(cam_handle_ptr)
+    SDK.OpenCamera(cam_handle_ptr)
     return cam_handle_ptr[]
 end
 
 function open(interface::String)
     cam_handle_ptr = Ref{HANDLE}(0)
     refoepnstruct = Ref(Openstruct(InterfaceType=INTERFACE_DICT[interface]))
-    @rccheck SDK.OpenCameraEx(cam_handle_ptr, refoepnstruct)
+    SDK.OpenCameraEx(cam_handle_ptr, refoepnstruct)
     return cam_handle_ptr[]
 end
 
 function close(cam_handle::HANDLE)
-    @rccheck SDK.CloseCamera(cam_handle)
+    SDK.CloseCamera(cam_handle)
 end
 
 # I/O configuration
@@ -77,18 +54,18 @@ const TRIGGER_MODE = ["auto", "SW", "HW&SW", "HW", "HW sync", "fast HW", "CDS", 
 
 function trigger_mode(cam_handle::HANDLE)
     mode = Ref(WORD(0))
-    @rccheck SDK.GetTriggerMode(cam_handle, mode)
+    SDK.GetTriggerMode(cam_handle, mode)
     return TRIGGER_MODE[mode[]+1]
 end
 
 function trigger_mode!(cam_handle::HANDLE, mode_name)
     mode = findfirst(x-> x==mode_name, TRIGGER_MODE)
-    @rccheck SDK.SetTriggerMode(cam_handle, mode-1)
+    SDK.SetTriggerMode(cam_handle, mode-1)
 end
 
 function trigger(cam_handle::HANDLE)
     trigger_success = Ref(WORD(0))
-    @rccheck SDK.ForceTrigger(cam_handle, trigger_success)
+    SDK.ForceTrigger(cam_handle, trigger_success)
     if trigger_success == 0
         @warn "camera is already active"
     end
@@ -96,26 +73,26 @@ end
 
 function region_of_interest(cam_handle::HANDLE)
     roi = zeros(WORD,(4,))
-    @rccheck SDK.GetROI(cam_handle, [view(roi, i) for i = 1:4]...)
+    SDK.GetROI(cam_handle, [view(roi, i) for i = 1:4]...)
     return NamedTuple{(:x_min,:y_min,:x_max,:y_max)}(ntuple(i->roi[i],4))
 end
 
 function recording_state!(cam_handle::HANDLE,state)
-    @rccheck SDK.SetRecordingState(cam_handle,state)
+    SDK.SetRecordingState(cam_handle,state)
 end
 
 function default!(cam_handle::HANDLE)
     metasize = Ref(WORD(0))
     metaversion = Ref(WORD(0))
-    @rccheck SDK.ResetSettingsToDefault(cam_handle)
-    @rccheck SDK.SetTimestampMode(cam_handle, false)
-    @rccheck SDK.SetMetaDataMode(cam_handle, true, metasize, metaversion)
-    @rccheck SDK.SetBitAlignment(cam_handle,1)
+    SDK.ResetSettingsToDefault(cam_handle)
+    SDK.SetTimestampMode(cam_handle, false)
+    SDK.SetMetaDataMode(cam_handle, true, metasize, metaversion)
+    SDK.SetBitAlignment(cam_handle,1)
 end
 
 function timing_mode(cam_handle::HANDLE)
     ref_timing_structure = Ref(Timing())
-    @rccheck SDK.GetTimingStruct(cam_handle, ref_timing_structure)
+    SDK.GetTimingStruct(cam_handle, ref_timing_structure)
     timing_structure = ref_timing_structure[]
     if timing_structure.TimingControlMode == WORD(0)
         # exposure / delay
@@ -180,7 +157,7 @@ function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, delay::TIME_Q
         delay_unit = WORD(2)
         delay_val = round(DWORD,uconvert(NoUnits, delay/1u"ms"))
     end
-    @rccheck SDK.SetDelayExposureTime(cam_handle, delay_val, exposure_val, delay_unit, exposure_unit)
+    SDK.SetDelayExposureTime(cam_handle, delay_val, exposure_val, delay_unit, exposure_unit)
 end
 
 function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, fps::FREQ_QUANTITY)
@@ -188,7 +165,7 @@ function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, fps::FREQ_QUA
     frame_rate_mode = WORD(3)
     exposure_val = Ref(round(DWORD,uconvert(NoUnits, exposure/1u"ns")))
     fps_val = Ref(round(DWORD,uconvert(NoUnits, fps/1u"mHz")))
-    @rccheck SDK.SetFrameRate(cam_handle, ref_frame_rate_status, frame_rate_mode, fps_val, exposure_val)
+    SDK.SetFrameRate(cam_handle, ref_frame_rate_status, frame_rate_mode, fps_val, exposure_val)
     frame_rate_status = ref_frame_rate_status[]
     @show frame_rate_status
     if frame_rate_mode == 0
@@ -204,7 +181,7 @@ function timing_mode!(cam_handle::HANDLE, exposure::TIME_QUANTITY, fps::FREQ_QUA
 end
 
 function arm(cam_handle::HANDLE)
-    @rccheck SDK.ArmCamera(cam_handle)
+    SDK.ArmCamera(cam_handle)
 end
 
 # activation & I/O operation
@@ -219,14 +196,14 @@ function create(cam_handle, mode = "memory",drive_letter='C')
     rec_mode = REC_MODE_DICT[mode]
     MaxImgCountArr = zeros(DWORD, cam_count)
     
-    @rccheck Recorder.Create(rec_handle_ptr, cam_handle_arr, img_distribution_arr, cam_count,
+    Recorder.Create(rec_handle_ptr, cam_handle_arr, img_distribution_arr, cam_count,
     rec_mode, drive_letter, MaxImgCountArr)
     return rec_handle_ptr[], MaxImgCountArr[]
 end
 
 function delete(rec_handle)
     if rec_handle != C_NULL
-        @rccheck Recorder.Delete(rec_handle)
+        Recorder.Delete(rec_handle)
     end
 end
 
@@ -248,25 +225,25 @@ function init(rec_handle,img_count,memory_type,buffer_type, overwrite = false)
     end
     filepath = C_NULL
     ram_segment_arr = C_NULL
-    @rccheck Recorder.Init(rec_handle, Ref(DWORD(img_count)), cam_count, 
+    Recorder.Init(rec_handle, Ref(DWORD(img_count)), cam_count, 
                            type, overwrite, filepath, ram_segment_arr)
 end
 
 
 function start_record(rec_handle)
-    @rccheck Recorder.StartRecord(rec_handle,C_NULL)
+    Recorder.StartRecord(rec_handle,C_NULL)
 end
 
 
 function stop_record(rec_handle, cam_handle)
     if rec_handle != C_NULL
-        @rccheck Recorder.StopRecord(rec_handle, cam_handle)
+        Recorder.StopRecord(rec_handle, cam_handle)
     end
 end
 
 function isactivated(rec_handle, cam_handle)
     is_running = Ref(bool(true))
-    @rccheck Recorder.GetStatus(rec_handle, cam_handle, is_running, ntuple(_->C_NULL, 8)...)
+    Recorder.GetStatus(rec_handle, cam_handle, is_running, ntuple(_->C_NULL, 8)...)
     return is_running[]
 end
 
@@ -277,7 +254,7 @@ end
 function copy_image(rec_handle, cam_handle; x_min, y_min, x_max, y_max)
     img_cnt_ptr = Ref(DWORD(0))
     while img_cnt_ptr[] == 0
-        @rccheck Recorder.GetStatus(rec_handle,cam_handle, C_NULL, C_NULL, C_NULL, img_cnt_ptr, 
+        Recorder.GetStatus(rec_handle,cam_handle, C_NULL, C_NULL, C_NULL, img_cnt_ptr, 
                     C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
     end
     img_cnt = img_cnt_ptr[]
@@ -288,7 +265,7 @@ function copy_image(rec_handle, cam_handle; x_min, y_min, x_max, y_max)
     timestamp = C_NULL
     for img_idx = 0:img_cnt-1
         img_num = Ref(DWORD(0))
-        @rccheck Recorder.CopyImage(rec_handle, cam_handle, img_idx, x_min, y_min, x_max, y_max,
+        Recorder.CopyImage(rec_handle, cam_handle, img_idx, x_min, y_min, x_max, y_max,
                                     @view(image[w*h*img_idx+1]), img_num, metadata, timestamp)
     end
     return image
@@ -316,7 +293,7 @@ const CAMNAME_DICT = Dict(
 
 function type(cam_handle::HANDLE)
     cam_type = CameraType()
-    @rccheck SDK.GetCameraType(cam_handle, cam_type)
+    SDK.GetCameraType(cam_handle, cam_type)
     cam_name = CAMNAME_DICT[cam_type.CamType]
     serial_num =cam_type.SerialNumber
     return cam_name,serial_num
@@ -327,7 +304,7 @@ const CAMERA_NAME_LEN = 40
 
 function name(cam_handle::HANDLE)
     name = zeros(Cchar, CAMERA_NAME_LEN)
-    @rccheck SDK.GetCameraName(cam_handle, name, CAMERA_NAME_LEN)
+    SDK.GetCameraName(cam_handle, name, CAMERA_NAME_LEN)
     name[end] = 0
     unsafe_string(pointer(name))
 end
