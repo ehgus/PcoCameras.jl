@@ -298,18 +298,16 @@ function SetDelayExposureTime(ph, delay, exposure, time_base_delay, time_base_ex
           ph, delay, exposure, time_base_delay, time_base_exposure)
 end
 
-function GetDelayExposureTimeTable(ph, delay, exposure, time_base_delay, time_base_exposure)
-    # TODO
+function GetDelayExposureTimeTable(ph, delay, exposure, time_base_delay, time_base_exposure, count)
     F = dlsym(SDK_DLL[], :PCO_GetDelayExposureTime)
-    ccall(F, Cuint, (HANDLE, Ptr{DWORD}, Ptr{DWORD}, Ptr{WORD}, Ptr{WORD}),
-          ph, delay, exposure, time_base_delay, time_base_exposure)
+    ccall(F, Cuint, (HANDLE, Ptr{DWORD}, Ptr{DWORD}, Ptr{WORD}, Ptr{WORD}, WORD),
+          ph, delay, exposure, time_base_delay, time_base_exposure, count)
 end
 
-function SetDelayExposureTimeTable(ph, delay, exposure, time_base_delay, time_base_exposure)
-    # TODO
+function SetDelayExposureTimeTable(ph, delay, exposure, time_base_delay, time_base_exposure, count)
     F = dlsym(SDK_DLL[], :PCO_SetDelayExposureTime)
-    ccall(F, Cuint, (HANDLE, DWORD, DWORD, WORD, WORD),
-          ph, delay, exposure, time_base_delay, time_base_exposure)
+    ccall(F, Cuint, (HANDLE, Ptr{DWORD}, Ptr{DWORD}, WORD, WORD, WORD),
+          ph, delay, exposure, time_base_delay, time_base_exposure, count)
 end
 
 """
