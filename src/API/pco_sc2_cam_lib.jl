@@ -4,11 +4,11 @@ using ..PcoStruct
 using ..TypeAlias
 import Libdl: dlopen, dlclose, dlsym
 
-dir_path = "C:/Program Files/PCO Digital Camera Toolbox/pco.recorder/bin64"
+dir_path = "C:/Program Files/PCO Digital Camera Toolbox/pco.recorder/bin/sc2_cam.dll"
 
 const SDK_DLL = Ref{Ptr{Cvoid}}(0)
 function __init__()
-    SDK_DLL[] = dlopen(joinpath(dir_path,"SC2_Cam.dll"))
+    SDK_DLL[] = dlopen(dir_path)
     finalizer((x->dlclose(x[])),SDK_DLL)
 end
 

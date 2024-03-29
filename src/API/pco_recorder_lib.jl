@@ -5,11 +5,11 @@ using ..TypeAlias
 using ..SDK: @rccheck
 import Libdl: dlopen, dlclose,  dlsym
 
-dir_path = "C:/Program Files/PCO Digital Camera Toolbox/pco.recorder/bin64"
+recorder_path = "C:/Program Files/PCO Digital Camera Toolbox/pco.recorder/bin/pco_recorder.dll"
 
 const Recorder_DLL = Ref{Ptr{Cvoid}}(0)
 function __init__()
-    Recorder_DLL[] = dlopen(joinpath(dir_path,"PCO_Recorder.dll"))
+    Recorder_DLL[] = dlopen(recorder_path)
     ResetLib(false)
     finalizer((x->dlclose(x[])),Recorder_DLL)
 end
