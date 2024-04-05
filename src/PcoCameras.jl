@@ -1,7 +1,6 @@
 module PcoCameras
 
 using Reexport
-using Dates
 using Unitful
 using ExternalDeviceIOs
 @reexport import ExternalDeviceIOs: activate, deactivate, isactivated

@@ -449,10 +449,9 @@ function SetMetaDataMode(ph, meta_data_mode, meta_data_size, meta_data_version)
      ph, meta_data_mode, meta_data_size, meta_data_version)
 end
 
-function SetDateTime(ph, time_stamp_mode)
-    # TODO
+function SetDateTime(ph, day, month, year, hour, min, sec)
     F = dlsym(SDK_DLL[], :PCO_SetDateTime)
-    @rccheck ccall(F, Cuint, (HANDLE, Ptr{WORD}), ph, time_stamp_mode)
+    @rccheck ccall(F, Cuint, (HANDLE, BYTE, BYTE, WORD, WORD, BYTE, BYTE), ph, day, month, year, hour, min, sec)
 end
 
 function GetTimestampMode(ph, time_stamp_mode)
