@@ -20,7 +20,7 @@ It additionally requires `ExternalDeviceIOs`.Therefore, to install this package,
 julia> ]add https://github.com/ehgus/ExternalDeviceIOs.jl https://github.com/ehgus/PcoCameras.jl
 ```
 
-## Example (High-level API)
+## Example
 
 ```Julia
 using PcoCameras
@@ -47,10 +47,16 @@ acquired_image = open(cam) do io
 end
 ```
 
-## Example (Low-level API)
+## Shared library configuration
+The default library path is set supposing you install the recent Recorder library for all users.
+You can check and change the path using `get_library_path` and `set_library_path!`.
+The directory should contains 'sc2_cam.dll' and 'pco_recorder.dll'.
 
-Examples are on the `example/` directory.
-
+```Julia
+old_path = PcoCameras.get_library_path()
+new_path = "some/dir/of/shared/library/"
+PcoCameras.set_library_path!(new_path)
+```
 
 ## Contribution
 

@@ -1,6 +1,7 @@
 module PcoCameras
 
 using Reexport
+using Preferences
 using Unitful
 using ExternalDeviceIOs
 @reexport import ExternalDeviceIOs: activate, deactivate, isactivated
@@ -20,6 +21,7 @@ import Base:
 export PcoCamera
 
 include("API/wrapper.jl")
+using .Wrapper: get_library_path, set_library_path!
 include("camera.jl")
 
 end # module PcoCameras

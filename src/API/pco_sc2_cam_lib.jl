@@ -1,14 +1,14 @@
 module SDK
 
+using ..Wrapper: shared_lib_path
 using ..PcoStruct
 using ..TypeAlias
 import Libdl: dlopen, dlclose, dlsym
 
-dir_path = "C:/Program Files/PCO Digital Camera Toolbox/pco.recorder/bin/sc2_cam.dll"
-
-const SDK_DLL = Ref{Ptr{Cvoid}}(0)
+const SDK_DLL = Ref{Ptr{Cvoid}}()
 function __init__()
-    SDK_DLL[] = dlopen(dir_path)
+    pco_recorder_dll = joinpath(shared_lib_path, "sc2_cam.dll")
+    SDK_DLL[] = dlopen(pco_recorder_dll)
     finalizer((x->dlclose(x[])),SDK_DLL)
 end
 
