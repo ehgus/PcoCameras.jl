@@ -3,7 +3,7 @@ using .Wrapper.TypeAlias
 using .Wrapper.PcoEnum
 using .Wrapper: PcoStruct, SDK, Recorder
 
-@kwdef struct PcoCamera <: IODeviceName
+@kwdef struct PcoCamera <: ExternalDeviceName
     interface::InterfaceType.T = InterfaceType.Any
 end
 
@@ -11,7 +11,7 @@ function PcoCamera(interface::Symbol)
     PcoCamera(eval(:(InterfaceType.$interface)))
 end
 
-@kwdef mutable struct PcoCameraIOStream <: VariableArrayIOStream
+@kwdef mutable struct PcoCameraIOStream <: ExternalDeviceIOStream
     name::String = ""
     # handler
     cam_handle::HANDLE = C_NULL

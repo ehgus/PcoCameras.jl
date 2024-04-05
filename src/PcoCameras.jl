@@ -1,26 +1,14 @@
 module PcoCameras
 
 using Reexport
-using VariableIOs
-using VariableIOs.VariableArrayIOs
 using Dates
 using Unitful
-
-@reexport import VariableIOs:
-    activate,
-    deactivate,
-    isactivated,
-    trigger_mode,
-    trigger_mode!,
-    timing_mode,
-    timing_mode!,
-    buffer_mode,
-    buffer_mode!,
-    trigger
-
-@reexport import VariableIOs.VariableArrayIOs:
-    region_of_interest,
-    region_of_interest!
+using ExternalDeviceIOs
+@reexport import ExternalDeviceIOs: activate, deactivate, isactivated
+@reexport import ExternalDeviceIOs.Timing: timing_mode, timing_mode!
+@reexport import ExternalDeviceIOs.Trigger: trigger_mode, trigger_mode!, trigger
+@reexport import ExternalDeviceIOs.Buffer: buffer_mode, buffer_mode!
+@reexport import ExternalDeviceIOs.ArrayedDevice: region_of_interest, region_of_interest!
 
 import Base:
     show,

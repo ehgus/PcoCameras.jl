@@ -6,7 +6,7 @@ version = "0.3.0"
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 EnumX = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
+ExternalDeviceIOs = "94545779-4ceb-5ed2-a54f-6cb9bc09d82c"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
-VariableIOs = "463b45cc-a64a-45f7-bf59-48542c22e457"
