@@ -1,8 +1,8 @@
 module SDK
 
-using ..Wrapper: shared_lib_path
+using ..PcoCameras: shared_lib_path
 using ..PcoStruct
-using ..TypeAlias
+using ..Alias
 import Libdl: dlopen, dlclose, dlsym
 
 const SDK_DLL = Ref{Ptr{Cvoid}}()

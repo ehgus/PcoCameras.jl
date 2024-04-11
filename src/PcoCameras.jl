@@ -19,9 +19,17 @@ import Base:
     wait,
     read
 export PcoCamera
+export Interface, TriggerMode, FileRecorder, MemoryRecorder, CamramRecorder
 
-include("API/wrapper.jl")
-using .Wrapper: get_library_path, set_library_path!
+# path manager using Preference.jl
+include("shared_library_manager.jl")
+# low-level API
+include("API/alias.jl")
+using .Alias
+include("API/pco_struct.jl")
+include("API/pco_sc2_cam_lib.jl")
+include("API/pco_recorder_lib.jl")
+# high-level API
 include("camera.jl")
 
 end # module PcoCameras

@@ -1,6 +1,6 @@
 module PcoStruct
 
-using ..TypeAlias
+using ..Alias
 
 export
     # SDK-Access
@@ -41,7 +41,7 @@ end
 
 @kwdef @zeros struct Openstruct
     Size::WORD = sizeof(Openstruct)
-    InterfaceType::WORD = 0xFFFF
+    Interface::WORD = 0xFFFF
     CameraNumber::WORD
     CameraNumAtInterface::WORD
     wOpenFlags::NTuple{10,WORD}
@@ -165,7 +165,7 @@ end
     SerialNumber::DWORD
     HWVersion::DWORD
     FWVersion::DWORD
-    InterfaceType::WORD
+    Interface::WORD
     HardwareVersion::HW_Vers = HW_Vers()
     FirmwareVersion::FW_Vers = FW_Vers()
     Dummy::NTuple{39,WORD}

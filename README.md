@@ -29,14 +29,14 @@ using Unitful
 # PcoCameras.reset() # to reset the camera connection
 
 # start camera
-cam = PcoCamera(:GigE)
+cam = PcoCamera(Interface.GigE)
 acquired_image = open(cam) do io
     @show trigger_mode(io)
     @show timing_mode(io)
     @show buffer_mode(io)
-    trigger_mode!(io, "auto")
+    trigger_mode!(io, TriggerMode.automatic)
     timing_mode!(io, exposure = 100u"μs", delay = 0u"μs")
-    buffer_mode!(io, "memory","sequence", number_of_images = 4)
+    buffer_mode!(io, MemoryRecorder.sequence, 4)
     @show trigger_mode(io)
     @show timing_mode(io)
     @show buffer_mode(io)
