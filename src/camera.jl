@@ -12,15 +12,12 @@ end
 
 @kwdef mutable struct PcoCameraIOStream <: ExternalDeviceIOStream
     name::String = ""
-    # handler
     cam_handle::HANDLE = C_NULL
     rec_handle::HANDLE = C_NULL
     # camera configuration
     roi::NTuple{2,NTuple{2,<:Integer}}
-    # logging
-    timestamp::Bool = false
     recorder_mode::RecorderMode = MemoryRecorder.ring_buffer
-    number_of_images::Int = 1
+    number_of_images::Unsigned = 1
 end
 
 function show(io::IO, ::MIME"text/plain", cam::PcoCamera)
