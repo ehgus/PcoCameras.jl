@@ -283,7 +283,7 @@ function create(cam_handle::HANDLE, recorder_mode::RecorderMode; drive_letter='C
     ref_max_img_count = Ref(DWORD(0))
     
     Recorder.Create(ref_rec_handle, Ref(cam_handle), img_distribution, cam_count,
-                    WORD(typeof(recorder_mode)), drive_letter, ref_max_img_count)
+                    WORD(typeof(recorder_mode)), convert(UInt8,drive_letter), ref_max_img_count)
     return ref_rec_handle[], ref_max_img_count[]
 end
 
