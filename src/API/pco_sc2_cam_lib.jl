@@ -391,6 +391,19 @@ function SetFastTimingMode(ph, fast_timing_mode)
     @rccheck ccall(F, Cuint, (HANDLE, WORD), ph, fast_timing_mode)
 end
 
+function GetHWIOSignal(ph, signal_num)
+    ref_signal = Ref(Signal())
+    F = dlsym(SDK_DLL[], :PCO_GetHWIOSignal)
+    @rccheck ccall(F, Cuint, (HANDLE, WORD, Ptr{Signal}), ph, signal_num, ref_signal)
+    ref_signal[]
+end
+
+function SetHWIOSignal(ph, signal_num, signal)
+    ref_signal = Ref(signal)
+    F = dlsym(SDK_DLL[], :PCO_SetHWIOSignal)
+    @rccheck ccall(F, Cuint, (HANDLE, WORD, Ptr{Signal}), ph, signal_num, ref_signal)
+end
+
 # ----------------------------------------------------------------------
 #    RECORDING CONTROL
 # ----------------------------------------------------------------------

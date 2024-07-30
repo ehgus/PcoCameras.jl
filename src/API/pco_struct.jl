@@ -11,6 +11,8 @@ export
     SC2_Hardware_DESC, SC2_Firmware_DESC, HW_Vers, FW_Vers, CameraType, General,
     # SDK-Sensor
     Sensor,
+    # SDK-Signal
+    Signal,
     # SDK-Timing
     Timing,
     # SDK-Recording
