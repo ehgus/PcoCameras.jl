@@ -262,16 +262,19 @@ Start Recording
 """
 function activate(cam_io::PcoCameraIOStream)
     # Reset previous recorder handler
-    if health(cam_io.cam_handle)["status"] & 2 == 0
-        SDK.ArmCamera(cam_io.cam_handle)
-    end
+    SDK.ArmCamera(cam_io.cam_handle)
     deactivate(cam_io)
     delete(cam_io.rec_handle)
     # create handler
     cam_io.rec_handle, max_img_count = create(cam_io.cam_handle, cam_io.recorder_mode)
-    @assert cam_io.number_of_images <= max_img_count "Maximum available images: $(max_img_count)"
-    init(cam_io.rec_handle, cam_io.recorder_mode, cam_io.number_of_images)
-    Recorder.StartRecord(cam_io.rec_handle,C_NULL)
+    try
+        @assert cam_io.number_of_images <= max_img_count "Maximum available images: $(max_img_count)"
+        init(cam_io.rec_handle, cam_io.recorder_mode, cam_io.number_of_images)
+        Recorder.StartRecord(cam_io.rec_handle,C_NULL)
+    catch
+        delete(cam_io.rec_handle)
+        rethrow()
+    end
 end
 
 function create(cam_handle::HANDLE, recorder_mode::RecorderMode; drive_letter='C', img_distribution = C_NULL)
