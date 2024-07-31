@@ -264,6 +264,8 @@ function activate(cam_io::PcoCameraIOStream)
     SDK.ArmCamera(cam_io.cam_handle)
     deactivate(cam_io)
     delete(cam_io.rec_handle)
+    # reset recorder to make sure a no previous instance is running
+    Recorder.ResetLib(false)
     # create handler
     cam_io.rec_handle, max_img_count = create(cam_io.cam_handle, cam_io.recorder_mode)
     try
