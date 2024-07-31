@@ -53,7 +53,6 @@ function open(cam::PcoCamera)
         name = get_name(cam_handle)
         # return IO
         io = PcoCameraIOStream(name = name, cam_handle = cam_handle, roi = roi)
-        finalizer(close, io)
         io
     catch e
         SDK.CloseCamera(cam_handle)
